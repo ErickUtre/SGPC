@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: sgpc_mysql_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: sgpc_db
+      MYSQL_ROOT_PASSWORD: password123
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
