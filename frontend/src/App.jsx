@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
-// Pantalla temporal para el siguiente paso (Transparencia)
 const Transparencia = () => (
   <div className="p-10 text-center">
     <h1 className="text-3xl font-bold text-[#1e4b8f]">Módulo de Solicitudes de Transparencia</h1>
