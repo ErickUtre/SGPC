@@ -6,7 +6,6 @@ const Login = () => {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        // Por ahora, como acordamos, solo navegamos sin validar
         navigate('/dashboard');
     };
 
