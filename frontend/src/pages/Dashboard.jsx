@@ -8,11 +8,10 @@ const Dashboard = () => {
     const userName = localStorage.getItem("userName");
 
     const handleTransparenciaClick = () => {
-        if (userRole === "Contralora") {
-            navigate('/transparencia/contralora');
-        } else {
-            navigate('/transparencia/ti');
-        }
+        if (userRole === "Contralora") navigate('/transparencia/contralora');
+        else if (userRole === "Responsable") navigate('/transparencia/responsable');
+        else if (userRole === "Secretaria") navigate('/transparencia/secretaria');
+        else navigate('/transparencia/ti');
     };
 
     return (

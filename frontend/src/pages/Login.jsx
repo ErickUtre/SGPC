@@ -23,9 +23,19 @@ const Login = () => {
             localStorage.setItem("userRole", "Contralora");
             localStorage.setItem("userName", "Mtra. Contralora General");
             navigate('/dashboard');
-        } 
+        }
+        else if (userValue === "Responsable") {
+            localStorage.setItem("userRole", "Responsable");
+            localStorage.setItem("userName", "Responsable Asignado");
+            navigate('/dashboard');
+        }
+        else if (userValue === "Secretaria") {
+            localStorage.setItem("userRole", "Secretaria");
+            localStorage.setItem("userName", "Secretaria");
+            navigate('/dashboard');
+        }
         else {
-            alert("Usuario no reconocido. Por favor ingresa 'TI' o 'Contralora' para las pruebas.");
+            alert("Usuario no reconocido. Ingresa 'TI', 'Contralora', 'Responsable' o 'Secretaria'.");
         }
     };
 
@@ -52,7 +62,7 @@ const Login = () => {
                             type="text" // Cambiado a text para aceptar "TI" o "Contralora"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
-                            placeholder="Ej: TI o Contralora"
+                            placeholder="Ej: david@example.com"
                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#009642] focus:ring-2 focus:ring-green-100 outline-none transition-all placeholder:text-gray-300 text-gray-700 font-medium"
                             required
                         />

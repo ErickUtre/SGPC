@@ -9,6 +9,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import SolicitudesTransparenciaTI from './pages/SolicitudesTransparenciaTI';
 import SolicitudesTransparenciaContralora from './pages/SolicitudesTransparenciaContralora';
+import SolicitudesTransparenciaResponsable from './pages/SolicitudesTransparenciaResponsable';
+import SolicitudesTransparenciaSecretaria from './pages/SolicitudesTransparenciaSecretaria';
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
             
             <Route path="/transparencia/ti" element={<SolicitudesTransparenciaTI />} />
             <Route path="/transparencia/contralora" element={<SolicitudesTransparenciaContralora />} />
+            <Route path="/transparencia/responsable" element={<SolicitudesTransparenciaResponsable />} />
+            <Route path="/transparencia/secretaria" element={<SolicitudesTransparenciaSecretaria />} />
           </Routes>
         </main>
       </div>
