@@ -7,10 +7,10 @@ import Header from './components/Header';
 // Importamos las páginas
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import SolicitudesTransparenciaTI from './pages/SolicitudesTransparenciaTI';
-import SolicitudesTransparenciaContralora from './pages/SolicitudesTransparenciaContralora';
-import SolicitudesTransparenciaResponsable from './pages/SolicitudesTransparenciaResponsable';
-import SolicitudesTransparenciaSecretaria from './pages/SolicitudesTransparenciaSecretaria';
+import SolicitudesTransparenciaTI from './pages/SolicitudesTransparencia/TransparenciaTI';
+import SolicitudesTransparenciaContralora from './pages/SolicitudesTransparencia/TransparenciaContralora';
+import SolicitudesTransparenciaResponsable from './pages/SolicitudesTransparencia/TransparenciaResponsable';
+import SolicitudesTransparenciaSecretaria from './pages/SolicitudesTransparencia/TransparenciaSecretaria';
 
 function App() {
   return (
