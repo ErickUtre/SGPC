@@ -12,3 +12,25 @@ services:
       - "3306:3306"
     volumes:
       - ./database:/docker-entrypoint-initdb.d
+
+  api:
+    build: ./backend
+    container_name: sgpc_api
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: password123
+      DB_NAME: sgpc_db
+      JWT_SECRET: sgpc_contraloria_uv_secreto_2026
+      JWT_EXPIRES_IN: 8h
+      PORT: 3001
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    depends_on:
+      - db

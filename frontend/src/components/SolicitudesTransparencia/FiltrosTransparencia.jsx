@@ -6,6 +6,7 @@ const filtroActivo = {
   Pendiente:    'bg-green-600 text-white border-green-600',
   'Por vencer': 'bg-orange-500 text-white border-orange-500',
   Vencida:      'bg-red-600 text-white border-red-600',
+  Resuelto:     'bg-blue-600 text-white border-blue-600',
   Cancelada:    'bg-gray-500 text-white border-gray-500',
 };
 const filtroInactivo = 'bg-white text-gray-500 border-gray-200 hover:border-gray-400';

@@ -4,8 +4,8 @@ import bannerImg from '../assets/banner-uv.png';
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const userRole = localStorage.getItem("userRole");
-    const userName = localStorage.getItem("userName");
+    const userRole = sessionStorage.getItem("userRole");
+    const userName = sessionStorage.getItem("userName");
 
     const handleTransparenciaClick = () => {
         if (userRole === "Contralora") navigate('/transparencia/contralora');

@@ -8,7 +8,7 @@ export const SolicitudCard = ({
   oficioButton,
   children 
 }) => {
-  const sem = !solicitud.cancelada ? getSemaforoInfo(solicitud.fecha) : null;
+  const sem = !solicitud.cancelada ? getSemaforoInfo(solicitud.fecha, solicitud.diasProrroga, solicitud.diasMaximos) : null;
   const c = solicitud.cancelada ? colorClasses.gray : colorClasses[sem.color];
 
   return (
@@ -38,7 +38,7 @@ export const SolicitudCard = ({
             <span className="text-sm font-semibold text-[#1e4b8f] truncate max-w-[200px]">{solicitud.archivo}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Fecha y Hora</span>
+            <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Fecha y hora de subida</span>
             <span className="text-sm font-medium text-gray-600 italic whitespace-nowrap">{solicitud.fecha} — {solicitud.hora}</span>
           </div>
           
@@ -96,7 +96,7 @@ export const SolicitudCard = ({
           )}
         </div>
 
-        {!solicitud.cancelada && children && (
+        {children && (
           <div className="flex items-center gap-2 flex-wrap">
             {children}
           </div>

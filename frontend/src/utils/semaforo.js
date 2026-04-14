@@ -1,14 +1,15 @@
-export const getSemaforoInfo = (fechaStr) => {
+export const getSemaforoInfo = (fechaStr, diasProrroga = 0, diasMaximos = 7) => {
   const [dia, mes, anio] = fechaStr.split('/').map(Number);
   const fechaSubida = new Date(anio, mes - 1, dia);
   const fechaMaxima = new Date(fechaSubida);
-  fechaMaxima.setDate(fechaMaxima.getDate() + 7);
+  fechaMaxima.setDate(fechaMaxima.getDate() + Number(diasMaximos) + Number(diasProrroga));
 
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
   fechaMaxima.setHours(0, 0, 0, 0);
 
-  const diffDias = Math.round((fechaMaxima - hoy) / (1000 * 60 * 60 * 24));
+  // Diferencia exacta en días (calendario)
+  const diffDias = Math.round((fechaMaxima.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
   const pad = (n) => String(n).padStart(2, '0');
   const fechaMaximaStr = `${pad(fechaMaxima.getDate())}/${pad(fechaMaxima.getMonth() + 1)}/${fechaMaxima.getFullYear()}`;
 
@@ -24,7 +25,7 @@ export const getSemaforoInfo = (fechaStr) => {
       fechaMaxima: fechaMaximaStr,
       estado: 'Vencida',
       color: 'red',
-      texto: diasRetraso === 0 ? 'Venció hoy' : `${diasRetraso} día${diasRetraso !== 1 ? 's' : ''} de retraso`,
+      texto: diffDias === 0 ? 'Vence hoy' : `${diasRetraso} día${diasRetraso !== 1 ? 's' : ''} de retraso`,
     };
   }
 };
