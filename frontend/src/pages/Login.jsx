@@ -1,41 +1,49 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = 'http://localhost:3001/api/auth/login';
+
 const Login = () => {
     const navigate = useNavigate();
-    
-    // Estado para capturar el valor del campo de "correo"
-    const [identifier, setIdentifier] = useState("");
-    const [password, setPassword] = useState("");
 
-    const handleLogin = (e) => {
+    const [correo, setCorreo] = useState('');
+    const [contrasena, setContrasena] = useState('');
+    const [cargando, setCargando] = useState(false);
+    const [error, setError] = useState('');
+    const [mostrarContrasena, setMostrarContrasena] = useState(false);
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        
-        const userValue = identifier.trim();
+        setError('');
+        setCargando(true);
 
-        // Lógica de redirección por Roles Estáticos
-        if (userValue === "TI") {
-            localStorage.setItem("userRole", "TI");
-            localStorage.setItem("userName", "Administrador TI");
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correo: correo.trim(), contrasena }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.ok) {
+                setError(data.mensaje || 'Credenciales incorrectas.');
+                return;
+            }
+
+            // Guardar datos de sesión en sessionStorage
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('userRole', data.usuario.rol);
+            sessionStorage.setItem('userName', data.usuario.nombre);
+            sessionStorage.setItem('userId', data.usuario.id);
+            sessionStorage.setItem('authPassed', 'true');
+
             navigate('/dashboard');
-        } 
-        else if (userValue === "Contralora") {
-            localStorage.setItem("userRole", "Contralora");
-            localStorage.setItem("userName", "Mtra. Contralora General");
-            navigate('/dashboard');
-        }
-        else if (userValue === "Responsable") {
-            localStorage.setItem("userRole", "Responsable");
-            localStorage.setItem("userName", "Responsable Asignado");
-            navigate('/dashboard');
-        }
-        else if (userValue === "Secretaria") {
-            localStorage.setItem("userRole", "Secretaria");
-            localStorage.setItem("userName", "Secretaria");
-            navigate('/dashboard');
-        }
-        else {
-            alert("Usuario no reconocido. Ingresa 'TI', 'Contralora', 'Responsable' o 'Secretaria'.");
+
+        } catch (err) {
+            setError('No se pudo conectar con el servidor. Verifica que la API esté corriendo.');
+        } finally {
+            setCargando(false);
         }
     };
 
@@ -53,40 +61,86 @@ const Login = () => {
                     Inicio de sesión
                 </h2>
 
+                {/* Mensaje de error de la API */}
+                {error && (
+                    <div className="mb-5 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm font-medium text-center">
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-bold text-gray-600 mb-2">
-                            Correo electrónico / Usuario
+                        <label htmlFor="correo" className="block text-sm font-bold text-gray-600 mb-2">
+                            Correo electrónico
                         </label>
                         <input
-                            type="text" // Cambiado a text para aceptar "TI" o "Contralora"
-                            value={identifier}
-                            onChange={(e) => setIdentifier(e.target.value)}
-                            placeholder="Ej: david@example.com"
+                            id="correo"
+                            type="email"
+                            value={correo}
+                            onChange={(e) => setCorreo(e.target.value)}
+                            placeholder="Ej: ti@uv.mx"
                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#009642] focus:ring-2 focus:ring-green-100 outline-none transition-all placeholder:text-gray-300 text-gray-700 font-medium"
                             required
+                            disabled={cargando}
+                            autoComplete="email"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-600 mb-2">
+                        <label htmlFor="contrasena" className="block text-sm font-bold text-gray-600 mb-2">
                             Contraseña
                         </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#009642] focus:ring-2 focus:ring-green-100 outline-none transition-all placeholder:text-gray-300"
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                id="contrasena"
+                                type={mostrarContrasena ? 'text' : 'password'}
+                                value={contrasena}
+                                onChange={(e) => setContrasena(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:border-[#009642] focus:ring-2 focus:ring-green-100 outline-none transition-all placeholder:text-gray-300"
+                                required
+                                disabled={cargando}
+                                autoComplete="current-password"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setMostrarContrasena(v => !v)}
+                                className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                                tabIndex={-1}
+                                aria-label={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                            >
+                                {mostrarContrasena ? (
+                                    /* Ojo tachado (ocultar) */
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                    </svg>
+                                ) : (
+                                    /* Ojo abierto (mostrar) */
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     <button
                         type="submit"
-                        className="w-full bg-[#009642] text-white py-3.5 rounded-xl font-bold text-lg hover:bg-green-700 shadow-md shadow-green-100 transition-all mt-4 active:scale-95"
+                        disabled={cargando}
+                        className="w-full bg-[#009642] text-white py-3.5 rounded-xl font-bold text-lg hover:bg-green-700 shadow-md shadow-green-100 transition-all mt-4 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        Ingresar
+                        {cargando ? (
+                            <>
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                </svg>
+                                Verificando...
+                            </>
+                        ) : (
+                            'Ingresar'
+                        )}
                     </button>
                 </form>
 

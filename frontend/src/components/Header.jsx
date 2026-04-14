@@ -17,11 +17,20 @@ const Header = () => {
   if (location.pathname === '/') return null;
 
   const handleTransparencia = () => {
-    const role = localStorage.getItem('userRole');
+    const role = sessionStorage.getItem('userRole');
     if (role === 'TI') navigate('/transparencia/ti');
     else if (role === 'Contralora') navigate('/transparencia/contralora');
     else if (role === 'Responsable') navigate('/transparencia/responsable');
     else if (role === 'Secretaria') navigate('/transparencia/secretaria');
+  };
+
+  const cerrarSesion = () => {
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('userName');
+    sessionStorage.removeItem('userId');
+    sessionStorage.removeItem('authPassed');
+    navigate('/');
   };
 
   return (
@@ -87,7 +96,7 @@ const Header = () => {
         </div>
 
         <button
-          onClick={() => navigate('/')}
+          onClick={cerrarSesion}
           className="text-xs text-gray-400 hover:text-red-500 transition-colors uppercase tracking-wider font-bold whitespace-nowrap pl-2 border-l border-gray-200"
         >
           Cerrar sesión
