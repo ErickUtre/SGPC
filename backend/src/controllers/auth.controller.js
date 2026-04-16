@@ -20,7 +20,7 @@ const loginUser = async (req, res, next) => {
 
     // 2. Buscar el usuario en la BD por correo
     const [rows] = await pool.query(
-      'SELECT IdUsuario, nombre, correo, contrasena, rol FROM Usuario WHERE correo = ?',
+      'SELECT IdUsuario, nombre, apellidoPaterno, apellidoMaterno, puesto, correo, contrasena, rol FROM Usuario WHERE correo = ?',
       [correo.trim().toLowerCase()]
     );
 
@@ -62,6 +62,9 @@ const loginUser = async (req, res, next) => {
       usuario: {
         id: usuario.IdUsuario,
         nombre: usuario.nombre,
+        apellidoPaterno: usuario.apellidoPaterno,
+        apellidoMaterno: usuario.apellidoMaterno,
+        puesto: usuario.puesto,
         correo: usuario.correo,
         rol: usuario.rol,
       },

@@ -1,4 +1,5 @@
 USE sgpc_db;
+SET NAMES 'utf8mb4';
 
 -- ==========================================================
 -- 1. ESTRUCTURA DE USUARIOS
@@ -45,6 +46,8 @@ CREATE TABLE IF NOT EXISTS Solicitud (
     diasProrroga INT DEFAULT 0, 
     cancelada BOOLEAN DEFAULT FALSE,
     fechaRegistro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fechaValidacion TIMESTAMP NULL,
+    fechaAsignacionProrroga TIMESTAMP NULL,
     FOREIGN KEY (IdUsuarioTI) REFERENCES Usuario(IdUsuario),
     FOREIGN KEY (IdArchivoPNT) REFERENCES Archivo(IdArchivo),
     FOREIGN KEY (IdCapturaEntrega) REFERENCES Archivo(IdArchivo)
@@ -95,6 +98,7 @@ CREATE TABLE IF NOT EXISTS ProrrogaSolicitud (
     IdProrroga INT AUTO_INCREMENT PRIMARY KEY,
     IdSolicitud INT NOT NULL,
     IdUsuarioResponsable INT NOT NULL,
+    motivo VARCHAR(500),
     fechaSolicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (IdSolicitud) REFERENCES Solicitud(IdSolicitud),
     FOREIGN KEY (IdUsuarioResponsable) REFERENCES Usuario(IdUsuario)

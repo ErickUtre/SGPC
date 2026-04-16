@@ -6,6 +6,9 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const userRole = sessionStorage.getItem("userRole");
     const userName = sessionStorage.getItem("userName");
+    const userLN = sessionStorage.getItem("userLN");
+    const userMLN = sessionStorage.getItem("userMLN");
+    const userPuesto = sessionStorage.getItem("userPuesto");
 
     const handleTransparenciaClick = () => {
         if (userRole === "Contralora") navigate('/transparencia/contralora');
@@ -25,7 +28,8 @@ const Dashboard = () => {
                 <div className="absolute inset-0 bg-black/60 z-10"></div>
                 <div className="relative z-20 text-white">
                     <h2 className="text-4xl font-light">Bienvenid@</h2>
-                    <p className="text-3xl font-bold mt-2">{userName}</p>
+                    <p className="text-3xl font-bold mt-2">{userName} {userLN} {userMLN}</p>
+                    {userPuesto && <p className="text-xl font-medium mt-1 text-gray-300">{userPuesto}</p>}
                     <div className="w-20 h-1 bg-green-500 mx-auto mt-6 rounded-full"></div>
                 </div>
             </section>

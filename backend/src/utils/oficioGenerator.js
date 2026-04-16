@@ -48,7 +48,7 @@ const generarOficioPDF = async (data) => {
 
     const reportData = {
       folio: data.solicitudFolio,
-      abreviacion: data.responsableAbreviacion || '',
+      abreviacion: (data.responsableAbreviacion || '').replace(/\.+$/, ''),
       nombre: data.responsableNombre || '',
       apellidoPaterno: data.responsableApellidoPaterno || '',
       apellidoMaterno: data.responsableApellidoMaterno || '',

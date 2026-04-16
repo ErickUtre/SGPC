@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTransparencia } from '../../hooks/useTransparencia';
 import { TransparenciaLayout } from '../../components/SolicitudesTransparencia/TransparenciaLayout';
 import { SolicitudCard } from '../../components/SolicitudesTransparencia/SolicitudCard';
@@ -81,6 +81,39 @@ const SolicitudesTransparenciaTI = () => {
       setListaEvidencias([]);
     }
   }, [modalAbierta, solicitudSeleccionada]);
+
+  const todasEvidenciasSubidas = useMemo(() => {
+    return listaEvidencias.length > 0 && listaEvidencias.every(ev => ev.IdEvidencia !== null);
+  }, [listaEvidencias]);
+
+  const descargarPaqueteZip = async () => {
+    if (!solicitudSeleccionada) return;
+    try {
+      const token = sessionStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/solicitudes/${solicitudSeleccionada.idOriginal}/paquete`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        window.alert('No se pudo generar el paquete de evidencias.');
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      // Sanitizar nombre para el archivo de descarga
+      const nombreSanitizado = solicitudSeleccionada.nombre.replace(/[^a-z0-9 ]/gi, '').replace(/ /g, '_');
+      link.download = `${nombreSanitizado}_Respuesta.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      window.alert('Error al conectar con el servidor.');
+    }
+  };
 
   const descargarArchivoEvidencia = async (idEvidencia) => {
     try {
@@ -477,29 +510,49 @@ const SolicitudesTransparenciaTI = () => {
                   <p className="text-center py-4 text-gray-400 text-sm italic">Ningún responsable ha subido su respuesta aún.</p>
                 ) : (
                   listaEvidencias.map((evidencia) => (
-                    <div key={evidencia.IdEvidencia} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+                    <div key={evidencia.IdUsuarioResponsable} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="bg-blue-50 text-[#1e4b8f] p-2 rounded-lg shrink-0">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <div className={`p-2 rounded-lg shrink-0 ${evidencia.IdEvidencia ? 'bg-blue-50 text-[#1e4b8f]' : 'bg-orange-50 text-orange-500'}`}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={evidencia.IdEvidencia ? "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" : "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"} /></svg>
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="text-xs font-black text-gray-800 truncate">{evidencia.nombreResponsable}</span>
-                          <span className="text-[10px] text-gray-500 truncate" title={evidencia.nombreArchivo}>{evidencia.nombreArchivo}</span>
+                          {evidencia.IdEvidencia ? (
+                            <span className="text-[10px] text-gray-500 truncate" title={evidencia.nombreArchivo}>{evidencia.nombreArchivo}</span>
+                          ) : (
+                            <span className="text-[10px] text-orange-500 font-bold italic tracking-tight">Aún no ha subido evidencia</span>
+                          )}
                         </div>
                       </div>
-                      <button 
-                        onClick={() => descargarArchivoEvidencia(evidencia.IdEvidencia)}
-                        className="w-full sm:w-auto px-4 py-1.5 text-[10px] font-bold border-2 border-[#1e4b8f] text-[#1e4b8f] rounded-lg hover:bg-[#1e4b8f] hover:text-white transition-all active:scale-95 whitespace-nowrap"
-                      >
-                        Ver Documento
-                      </button>
+                      {evidencia.IdEvidencia ? (
+                        <button 
+                          onClick={() => descargarArchivoEvidencia(evidencia.IdEvidencia)}
+                          className="w-full sm:w-auto px-4 py-1.5 text-[10px] font-bold border-2 border-[#1e4b8f] text-[#1e4b8f] rounded-lg hover:bg-[#1e4b8f] hover:text-white transition-all active:scale-95 whitespace-nowrap"
+                        >
+                          Ver Documento
+                        </button>
+                      ) : (
+                        <div className="w-full sm:w-auto px-4 py-1.5 text-[9px] font-bold text-gray-400 bg-gray-50 rounded-lg border border-gray-100 uppercase tracking-widest text-center">
+                          Pendiente
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
               </div>
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4 border-t border-gray-100 pt-6">
                 <button onClick={() => setModalAbierta(false)} className="w-full sm:w-auto order-2 sm:order-1 px-8 py-3 text-xs font-bold text-gray-400 transition-all hover:text-red-600 hover:bg-red-50 rounded-lg active:scale-95">Cerrar ventana</button>
-                <button className="w-full sm:w-auto order-1 sm:order-2 bg-[#009642] text-white px-8 py-3 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all hover:bg-green-700 active:scale-95">Descargar todo</button>
+                <button 
+                  onClick={descargarPaqueteZip}
+                  disabled={!todasEvidenciasSubidas || !solicitudSeleccionada?.validada}
+                  className={`w-full sm:w-auto order-1 sm:order-2 px-8 py-3 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all ${
+                    (todasEvidenciasSubidas && solicitudSeleccionada?.validada)
+                      ? 'bg-[#009642] text-white hover:bg-green-700 active:scale-95' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+                  }`}
+                >
+                  {solicitudSeleccionada?.validada ? 'Descargar todo' : 'Esperando validación de Contralora'}
+                </button>
               </div>
             </div>
           </div>

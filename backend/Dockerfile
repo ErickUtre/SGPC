@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
 # Instalar LibreOffice para conversión de documentos (DOCX -> PDF)
-RUN apk add --no-cache libreoffice openjdk8-jre-base ttf-droid ttf-freefont ttf-liberation ttf-dejavu
+RUN apk add --no-cache libreoffice openjdk8-jre-base ttf-droid ttf-freefont ttf-liberation ttf-dejavu font-carlito font-croscore msttcorefonts-installer && update-ms-fonts && fc-cache -f
 
 WORKDIR /app
 

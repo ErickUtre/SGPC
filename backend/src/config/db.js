@@ -11,6 +11,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
   timezone: 'Z',
   dateStrings: true,
+  charset: 'utf8mb4',
 });
 
 // Verificar conexión al arrancar

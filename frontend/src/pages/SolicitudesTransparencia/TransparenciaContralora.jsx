@@ -26,10 +26,13 @@ const SolicitudesTransparenciaContralora = () => {
   
   const [listaEvidencias, setListaEvidencias] = useState([]);
   const [cargandoEvidencias, setCargandoEvidencias] = useState(false);
+  const [asignando, setAsignando] = useState(false);
+  const [errorAsignar, setErrorAsignar] = useState('');
 
   const [peticionesProrroga, setPeticionesProrroga] = useState([]);
   const [cargandoPeticiones, setCargandoPeticiones] = useState(false);
   const [diasProrrogaInput, setDiasProrrogaInput] = useState('');
+  const [motivoExpandidoId, setMotivoExpandidoId] = useState(null);
 
   useEffect(() => {
     const token = sessionStorage.getItem('token');
@@ -138,6 +141,16 @@ const SolicitudesTransparenciaContralora = () => {
     }
   };
 
+  const getNowFormattedDate = () => {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    let hh = now.getHours();
+    const mm = pad(now.getMinutes());
+    const ampm = hh >= 12 ? 'PM' : 'AM';
+    hh = hh % 12 || 12;
+    return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} — ${pad(hh)}:${mm} ${ampm}`;
+  };
+
   const confirmarValidacion = async () => {
     try {
       const token = sessionStorage.getItem('token');
@@ -148,7 +161,7 @@ const SolicitudesTransparenciaContralora = () => {
 
       if (response.ok) {
         state.setSolicitudes(state.solicitudes.map(s => 
-          s.id === solicitudSeleccionada.id ? { ...s, validada: true } : s
+          s.id === solicitudSeleccionada.id ? { ...s, validada: true, resuelto: true, fechaValidacion: getNowFormattedDate() } : s
         ));
         setModalValidar(false);
         setModalAbierta(false);
@@ -170,6 +183,9 @@ const SolicitudesTransparenciaContralora = () => {
       if (!confirmar) return;
     }
     
+    setErrorAsignar('');
+    setAsignando(true);
+
     const token = sessionStorage.getItem('token');
     try {
       const response = await fetch(`${API_BASE}/solicitudes/${solicitudSeleccionada.idOriginal}/turnar`, {
@@ -181,7 +197,9 @@ const SolicitudesTransparenciaContralora = () => {
         body: JSON.stringify({ idsResponsables: seleccionados }),
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.ok) {
         state.setSolicitudes(state.solicitudes.map(s => 
           s.id === solicitudSeleccionada.id 
             ? { ...s, asignada: true, evidenciaSubida: false, validada: false } 
@@ -189,9 +207,14 @@ const SolicitudesTransparenciaContralora = () => {
         ));
         setModalAsignar(false);
         setSeleccionados([]);
+      } else {
+        setErrorAsignar(data.mensaje || 'Error al asignar responsables y generar oficios.');
       }
     } catch (error) {
       console.error("Error al asignar responsables", error);
+      setErrorAsignar('No se pudo conectar con el servidor. Verifica tu conexión.');
+    } finally {
+      setAsignando(false);
     }
   };
 
@@ -199,6 +222,8 @@ const SolicitudesTransparenciaContralora = () => {
     setSolicitudSeleccionada(sol);
     setSeleccionados([]); // Limpiar selección previa mientras carga
     setModalAsignar(true);
+    setErrorAsignar(''); // Limpiar errores previos
+    setAsignando(false);
     
     try {
       const token = sessionStorage.getItem('token');
@@ -270,6 +295,7 @@ const SolicitudesTransparenciaContralora = () => {
       fetchPeticiones();
     } else {
       setPeticionesProrroga([]);
+      setMotivoExpandidoId(null);
     }
   }, [modalProrroga, solicitudSeleccionada]);
 
@@ -294,7 +320,8 @@ const SolicitudesTransparenciaContralora = () => {
             return {
               ...s,
               diasProrroga: s.diasProrroga + dias,
-              solicitudesProrrogaCount: 0
+              solicitudesProrrogaCount: 0,
+              fechaAsignacionProrroga: getNowFormattedDate()
             };
           }
           return s;
@@ -335,7 +362,7 @@ const SolicitudesTransparenciaContralora = () => {
           </div>
         )}
         {state.solicitudesFiltradas.map((sol) => (
-          <SolicitudCard key={sol.id} solicitud={sol} onVerClick={() => abrirArchivoPNTEnPestana(sol)}>
+          <SolicitudCard key={sol.id} solicitud={sol} isContraloraView={true} onVerClick={() => abrirArchivoPNTEnPestana(sol)}>
             {!sol.cancelada && (
               <div className="flex flex-col sm:flex-row items-center gap-4 flex-wrap w-full">
                 <div className="relative w-full sm:w-auto">
@@ -432,10 +459,44 @@ const SolicitudesTransparenciaContralora = () => {
                   <p className="text-center text-gray-400 text-sm italic py-4">No se encontraron responsables registrados en el sistema.</p>
                 )}
               </div>
+
+              {/* Mensaje de Error */}
+              {errorAsignar && (
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>Error de asignación</span>
+                  </div>
+                  <p className="opacity-80 font-medium leading-relaxed">{errorAsignar}</p>
+                </div>
+              )}
+
               <div className="flex justify-center gap-4">
-                <button onClick={() => { setModalAsignar(false); setSeleccionados([]); }} className="px-6 py-2 text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Cancelar</button>
-                <button onClick={confirmarAsignacion} className="bg-[#009642] text-white px-10 py-3 rounded-xl font-bold text-xs shadow-md hover:bg-green-700 transition-all active:scale-95">
-                  Confirmar Asignación
+                <button 
+                  onClick={() => { setModalAsignar(false); setSeleccionados([]); }} 
+                  disabled={asignando}
+                  className={`px-6 py-2 text-xs font-bold text-gray-400 transition-colors ${asignando ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-500'}`}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={confirmarAsignacion} 
+                  disabled={asignando || seleccionados.length === 0}
+                  className={`relative bg-[#009642] text-white px-10 py-3 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 ${
+                    (asignando || seleccionados.length === 0) ? 'opacity-60 cursor-not-allowed' : 'hover:bg-green-700'
+                  }`}
+                >
+                  {asignando ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Asignando...
+                    </>
+                  ) : (
+                    'Confirmar Asignación'
+                  )}
                 </button>
               </div>
             </div>
@@ -597,16 +658,35 @@ const SolicitudesTransparenciaContralora = () => {
                     <div className="text-center py-4 text-xs font-semibold text-gray-400">Nadie ha solicitado prórroga aún.</div>
                   ) : (
                     peticionesProrroga.map((pet) => (
-                      <div key={pet.IdProrroga} className="bg-white border border-gray-200 p-3 rounded-lg flex items-center gap-3 shadow-sm">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                          </svg>
+                      <div key={pet.IdProrroga} className="bg-white border border-gray-200 p-4 rounded-xl flex flex-col gap-3 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2 w-full">
+                              <span className="text-gray-800 font-bold text-sm truncate">{pet.nombre}</span>
+                              {pet.motivo ? (
+                                <button 
+                                  onClick={() => setMotivoExpandidoId(motivoExpandidoId === pet.IdProrroga ? null : pet.IdProrroga)}
+                                  className="px-2.5 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-lg hover:bg-orange-100 transition-colors shrink-0 outline-none"
+                                >
+                                  {motivoExpandidoId === pet.IdProrroga ? 'Ocultar motivo' : 'Ver motivo'}
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-gray-400 italic">Sin motivo registrado</span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-gray-400">Solicitó extensión el {new Date(pet.fechaSolicitud).toLocaleDateString()}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-gray-800 font-bold text-sm truncate">{pet.nombre}</span>
-                          <span className="text-[10px] text-gray-400">Solicitó extensión el {new Date(pet.fechaSolicitud).toLocaleDateString()}</span>
-                        </div>
+                        {pet.motivo && motivoExpandidoId === pet.IdProrroga && (
+                          <div className="bg-orange-50 border border-orange-100/60 rounded-lg p-3 text-xs text-gray-700 font-medium italic mt-1 leading-relaxed relative animate-in fade-in slide-in-from-top-1 duration-200">
+                            "{pet.motivo}"
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
