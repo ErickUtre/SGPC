@@ -79,6 +79,8 @@ const obtenerSolicitudes = async (req, res, next) => {
         s.resuelto,
         s.IdCapturaEntrega,
         s.fechaRegistro,
+        s.fechaValidacion,
+        s.fechaAsignacionProrroga,
         s.folio,
         s.diasMaximos,
         a.nombreArchivo,
@@ -142,6 +144,8 @@ const obtenerSolicitudes = async (req, res, next) => {
         yaSolicitoProrroga: !!row.yaSolicitoProrroga,
         cancelada: !!row.cancelada,
         validada: !!row.resuelto,
+        fechaValidacion: row.fechaValidacion ? `${formatFecha(row.fechaValidacion)} — ${formatHora(row.fechaValidacion)}` : null,
+        fechaAsignacionProrroga: row.fechaAsignacionProrroga ? `${formatFecha(row.fechaAsignacionProrroga)} — ${formatHora(row.fechaAsignacionProrroga)}` : null,
         paqueteGenerado: false,
       };
     });
@@ -688,7 +692,7 @@ const obtenerListaEvidencias = async (req, res, next) => {
     const [rows] = await pool.query(
       `SELECT 
          ts.IdUsuarioResponsable, 
-         u.nombre AS nombreResponsable, 
+         CONCAT_WS(' ', u.nombre, u.apellidoPaterno, u.apellidoMaterno, CASE WHEN u.puesto IS NOT NULL AND u.puesto != '' THEN CONCAT('- ', u.puesto) ELSE NULL END) AS nombreResponsable, 
          er.IdEvidencia,
          a.nombreArchivo 
        FROM TurnadoSolicitud ts
@@ -742,6 +746,7 @@ const solicitarProrroga = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
     const idUsuario = req.usuario?.IdUsuario;
+    const { motivo } = req.body;
 
     if (!Number.isInteger(idSolicitud) || idSolicitud <= 0) {
       return res.status(400).json({ ok: false, mensaje: 'Id de solicitud inválido.' });
@@ -749,8 +754,8 @@ const solicitarProrroga = async (req, res, next) => {
 
     // Insertar en la tabla de petición
     await pool.query(
-      'INSERT INTO ProrrogaSolicitud (IdSolicitud, IdUsuarioResponsable) VALUES (?, ?)',
-      [idSolicitud, idUsuario]
+      'INSERT INTO ProrrogaSolicitud (IdSolicitud, IdUsuarioResponsable, motivo) VALUES (?, ?, ?)',
+      [idSolicitud, idUsuario, motivo || null]
     );
 
     return res.status(200).json({ ok: true, mensaje: 'Prórroga solicitada con éxito.' });
@@ -769,7 +774,7 @@ const obtenerPeticionesProrroga = async (req, res, next) => {
     }
 
     const [rows] = await pool.query(
-      `SELECT ps.IdProrroga, u.nombre, ps.fechaSolicitud 
+      `SELECT ps.IdProrroga, CONCAT_WS(' ', u.nombre, u.apellidoPaterno, u.apellidoMaterno, CASE WHEN u.puesto IS NOT NULL AND u.puesto != '' THEN CONCAT('- ', u.puesto) ELSE NULL END) AS nombre, ps.fechaSolicitud, ps.motivo 
        FROM ProrrogaSolicitud ps
        INNER JOIN Usuario u ON ps.IdUsuarioResponsable = u.IdUsuario
        WHERE ps.IdSolicitud = ?
@@ -800,7 +805,7 @@ const asignarProrroga = async (req, res, next) => {
     await conn.beginTransaction();
 
     // Actualizamos el límite extendiéndolo
-    await conn.query('UPDATE Solicitud SET diasProrroga = diasProrroga + ? WHERE IdSolicitud = ?', [dias, idSolicitud]);
+    await conn.query('UPDATE Solicitud SET diasProrroga = diasProrroga + ?, fechaAsignacionProrroga = CURRENT_TIMESTAMP WHERE IdSolicitud = ?', [dias, idSolicitud]);
 
     // Limpiamos la lista de alertas para esta solicitud
     await conn.query('DELETE FROM ProrrogaSolicitud WHERE IdSolicitud = ?', [idSolicitud]);
@@ -860,15 +865,9 @@ const generarPaqueteZip = async (req, res, next) => {
       return res.status(400).json({ ok: false, mensaje: 'Id de solicitud inválido.' });
     }
 
-    // 1. Obtener datos de la solicitud y sus archivos principales
+    // 1. Obtener nombre de la solicitud
     const [solRows] = await pool.query(
-      `SELECT s.nombreSolicitud,
-              aPNT.nombreArchivo AS nombrePNT, aPNT.contenido AS contenidoPNT,
-              aCaptura.nombreArchivo AS nombreCaptura, aCaptura.contenido AS contenidoCaptura
-       FROM Solicitud s
-       LEFT JOIN Archivo aPNT ON s.IdArchivoPNT = aPNT.IdArchivo
-       LEFT JOIN Archivo aCaptura ON s.IdCapturaEntrega = aCaptura.IdArchivo
-       WHERE s.IdSolicitud = ?`,
+      `SELECT nombreSolicitud FROM Solicitud WHERE IdSolicitud = ?`,
        [idSolicitud]
     );
 
@@ -879,19 +878,9 @@ const generarPaqueteZip = async (req, res, next) => {
     const solicitud = solRows[0];
     const zip = new AdmZip();
 
-    // 2. Carpeta "Solicitud"
-    if (solicitud.contenidoPNT) {
-      zip.addFile(`Solicitud/${solicitud.nombrePNT}`, solicitud.contenidoPNT);
-    } else {
-      zip.addFile(`Solicitud/leeme.txt`, Buffer.from('No se encontró el archivo de la solicitud original.'));
-    }
-
-    // 3. Carpeta "Oficios turnados"
-    zip.addFile(`Oficios turnados/`, Buffer.alloc(0));
-
-    // 4. Carpeta "Respuesta" (evidencias de responsables)
+    // 2. Carpeta raíz: evidencias de responsables
     const [evidencias] = await pool.query(
-      `SELECT a.nombreArchivo, a.contenido, u.nombre AS nombreResponsable
+      `SELECT a.nombreArchivo, a.contenido, CONCAT_WS(' ', u.nombre, u.apellidoPaterno, u.apellidoMaterno, CASE WHEN u.puesto IS NOT NULL AND u.puesto != '' THEN CONCAT('- ', u.puesto) ELSE NULL END) AS nombreResponsable
        FROM EvidenciaResponsable er
        INNER JOIN Respuesta r ON er.IdRespuesta = r.IdRespuesta
        INNER JOIN Archivo a ON er.IdArchivoRespuesta = a.IdArchivo
@@ -903,30 +892,27 @@ const generarPaqueteZip = async (req, res, next) => {
     if (evidencias.length > 0) {
       evidencias.forEach(ev => {
         const ext = ev.nombreArchivo.split('.').pop();
-        const base = ev.nombreArchivo.replace(`.${ext}`, '');
+        const base = ev.nombreArchivo.substring(0, ev.nombreArchivo.lastIndexOf('.'));
         // Sanitizar nombre de responsable para el sistema de archivos
-        const respNameSafe = ev.nombreResponsable.replace(/[^a-z0-9]/gi, '_');
+        const respNameSafe = ev.nombreResponsable.replace(/[^a-z0-9 ]/gi, '').replace(/ /g, '_');
         const nombreFinal = `${base}_${respNameSafe}.${ext}`;
-        zip.addFile(`Respuesta/${nombreFinal}`, ev.contenido);
+        // Agregar a la raíz del ZIP
+        zip.addFile(nombreFinal, ev.contenido);
       });
     } else {
-       zip.addFile(`Respuesta/leeme.txt`, Buffer.from('Aún no hay respuestas de los responsables.'));
-    }
-
-    // 5. Carpeta "Captura de evidencia de entrega"
-    if (solicitud.contenidoCaptura) {
-      zip.addFile(`Captura de evidencia de entrega/${solicitud.nombreCaptura}`, solicitud.contenidoCaptura);
-    } else {
-      zip.addFile(`Captura de evidencia de entrega/leeme.txt`, Buffer.from('No se ha subido captura de evidencia de entrega.'));
+       // Si no hay evidencias, agregar un archivo informativo
+       zip.addFile(`Aviso.txt`, Buffer.from('No se encontraron evidencias para esta solicitud.'));
     }
 
     const zipBuffer = zip.toBuffer();
-    const nombreZip = `Paquete_Solicitud_${idSolicitud}.zip`;
+    const nombreSolicitudSanitizado = solicitud.nombreSolicitud.replace(/[^a-z0-9 ]/gi, '').replace(/ /g, '_');
+    const nombreZip = `${nombreSolicitudSanitizado}_Respuesta.zip`;
 
     res.set({
       'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="${nombreZip}"`,
-      'Content-Length': zipBuffer.length
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(nombreZip)}"`,
+      'Content-Length': zipBuffer.length,
+      'Access-Control-Expose-Headers': 'Content-Disposition'
     });
 
     return res.end(zipBuffer);
@@ -944,7 +930,7 @@ const resolverSolicitud = async (req, res, next) => {
       return res.status(400).json({ ok: false, mensaje: 'Id de solicitud inválido.' });
     }
 
-    await pool.query('UPDATE Solicitud SET resuelto = TRUE WHERE IdSolicitud = ?', [idSolicitud]);
+    await pool.query('UPDATE Solicitud SET resuelto = TRUE, fechaValidacion = CURRENT_TIMESTAMP WHERE IdSolicitud = ?', [idSolicitud]);
 
     return res.status(200).json({ ok: true, mensaje: 'Solicitud resuelta correctamente.' });
   } catch (error) {

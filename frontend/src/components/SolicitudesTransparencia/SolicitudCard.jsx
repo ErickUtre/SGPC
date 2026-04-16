@@ -6,6 +6,7 @@ export const SolicitudCard = ({
   titleComponent,
   onVerClick,
   oficioButton,
+  isContraloraView,
   children 
 }) => {
   const sem = !solicitud.cancelada ? getSemaforoInfo(solicitud.fecha, solicitud.diasProrroga, solicitud.diasMaximos) : null;
@@ -24,84 +25,107 @@ export const SolicitudCard = ({
         </button>
       )}
 
-      <div className="flex flex-col gap-1">
-        <span className="text-[10px] font-bold text-gray-400 tracking-widest">Folio: {solicitud.folio}</span>
-        {titleComponent ? titleComponent : (
-          <h3 className="text-xl md:text-2xl font-bold text-gray-800 leading-tight break-words">{solicitud.nombre}</h3>
-        )}
-      </div>
-
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end border-t border-gray-50 pt-6 mt-2 gap-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-12">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Archivo</span>
-            <span className="text-sm font-semibold text-[#1e4b8f] truncate max-w-[200px]">{solicitud.archivo}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Fecha y hora de subida</span>
-            <span className="text-sm font-medium text-gray-600 italic whitespace-nowrap">{solicitud.fecha} — {solicitud.hora}</span>
-          </div>
-          
-          {solicitud.cancelada ? (
-            <>
-              <div className="flex flex-col justify-center">
-                <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Estado</span>
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${c.bg} ${c.text} ${c.border} w-fit`}>
-                  <span className={`w-2 h-2 rounded-full ${c.dot} shrink-0`}></span>
-                  <span className="text-[10px] font-bold tracking-wider">Cancelada</span>
-                </div>
-              </div>
-              {oficioButton && (
-                <div className="flex flex-col justify-center">
-                  <span className="text-[10px] font-bold text-transparent mb-1 tracking-wider select-none">Ver Oficio</span>
-                  {oficioButton}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Fecha Máx. Respuesta</span>
-                <span className="text-sm font-medium text-gray-600 italic whitespace-nowrap">{sem.fechaMaxima}</span>
-              </div>
-              <div className="flex flex-col justify-center">
-                <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Estado</span>
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${c.bg} ${c.text} ${c.border} w-fit`}>
-                  <span className={`w-2 h-2 rounded-full ${c.dot} shrink-0`}></span>
-                  <span className="text-[10px] font-bold tracking-wider">{sem.estado}</span>
-                  <span className="text-[10px] font-medium">· {sem.texto}</span>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center">
-                <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Validación</span>
-                {solicitud.validada ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border bg-green-100 text-green-700 border-green-300 w-fit">
-                    <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                    <span className="text-[10px] font-bold tracking-wider">Validada</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border bg-gray-100 text-gray-500 border-gray-300 w-fit">
-                    <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0"></span>
-                    <span className="text-[10px] font-bold tracking-wider">Sin validar</span>
-                  </div>
-                )}
-              </div>
-              {oficioButton && (
-                <div className="flex flex-col justify-center">
-                  <span className="text-[10px] font-bold text-transparent mb-1 tracking-wider select-none">Ver Oficio</span>
-                  {oficioButton}
-                </div>
-              )}
-            </>
+      {/* FILA 1: Título/Folio izquierda, Fechas a la derecha */}
+      <div className="flex flex-col xl:flex-row justify-between xl:items-start gap-6 pt-10 md:pt-0 pr-16 md:pr-24">
+        <div className="flex flex-col gap-1 xl:w-5/12">
+          <span className="text-[10px] font-bold text-gray-400 tracking-widest">Folio: {solicitud.folio}</span>
+          {titleComponent ? titleComponent : (
+            <h3 className="text-xl md:text-2xl font-bold text-gray-800 leading-tight break-words pr-2">{solicitud.nombre}</h3>
           )}
         </div>
 
+        <div className="flex flex-wrap gap-4 xl:justify-end xl:w-7/12 mt-2 xl:mt-0 xl:pt-1">
+           <div className="flex flex-col bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
+             <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Fecha y hora de subida</span>
+             <span className="text-xs font-medium text-gray-700 italic whitespace-nowrap">{solicitud.fecha} — {solicitud.hora}</span>
+           </div>
+           
+           {!solicitud.cancelada && (
+             <div className="flex flex-col bg-blue-50 border border-blue-100 px-3 py-2 rounded-lg">
+               <span className="text-[10px] font-bold text-blue-400 mb-1 tracking-wider">Máx. Respuesta</span>
+               <span className="text-xs font-medium text-[#1e4b8f] italic whitespace-nowrap">{sem.fechaMaxima} — {solicitud.hora}</span>
+             </div>
+           )}
+
+           {isContraloraView && solicitud.fechaValidacion && (
+             <div className="flex flex-col bg-green-50 border border-green-100 px-3 py-2 rounded-lg relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-8 h-8 bg-green-500/10 rounded-bl-full"></div>
+               <span className="text-[10px] font-bold text-green-500 mb-1 tracking-wider">Fecha Validación</span>
+               <span className="text-xs font-medium text-green-700 italic whitespace-nowrap">{solicitud.fechaValidacion}</span>
+             </div>
+           )}
+
+           {isContraloraView && solicitud.fechaAsignacionProrroga && (
+             <div className="flex flex-col bg-orange-50 border border-orange-100 px-3 py-2 rounded-lg relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-8 h-8 bg-orange-500/10 rounded-bl-full"></div>
+               <span className="text-[10px] font-bold text-orange-400 mb-1 tracking-wider">Asignación Prórroga</span>
+               <span className="text-xs font-medium text-orange-600 italic whitespace-nowrap">{solicitud.fechaAsignacionProrroga}</span>
+             </div>
+           )}
+        </div>
+      </div>
+
+      {/* FILA 2 & 3: Archivo, Estados y Botones */}
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between border-t border-gray-50 pt-6 gap-6">
+        
+        {/* Lado Izquierdo: Documento y Estados */}
+        <div className="flex flex-col gap-5 flex-1 min-w-0">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Documento Principal</span>
+            <span className="text-sm font-semibold text-[#1e4b8f] truncate block" title={solicitud.archivo}>{solicitud.archivo}</span>
+            {oficioButton && (
+              <div className="mt-3">
+                {oficioButton}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-6">
+             {/* Estado Semaforo */}
+             <div className="flex flex-col">
+               <span className="text-[9px] font-bold text-gray-400 mb-1 tracking-widest uppercase">Estado</span>
+               {solicitud.cancelada ? (
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${c.bg} ${c.text} ${c.border} w-fit`}>
+                    <span className={`w-2 h-2 rounded-full ${c.dot} shrink-0`}></span>
+                    <span className="text-[10px] font-bold tracking-wider">Cancelada</span>
+                  </div>
+               ) : (
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${c.bg} ${c.text} ${c.border} w-fit`}>
+                    <span className={`w-2 h-2 rounded-full ${c.dot} shrink-0`}></span>
+                    <span className="text-[10px] font-bold tracking-wider">{sem.estado}</span>
+                    <span className="text-[10px] font-medium">· {sem.texto}</span>
+                  </div>
+               )}
+             </div>
+
+             {/* Validacion Status */}
+             {!solicitud.cancelada && (
+               <div className="flex flex-col">
+                 <span className="text-[9px] font-bold text-gray-400 mb-1 tracking-widest uppercase">Estatus de Validación</span>
+                 {solicitud.validada ? (
+                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border bg-green-100 text-green-700 border-green-300 w-fit">
+                     <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                     <span className="text-[10px] font-bold tracking-wider">Validada</span>
+                   </div>
+                 ) : (
+                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border bg-gray-100 text-gray-500 border-gray-300 w-fit">
+                     <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0"></span>
+                     <span className="text-[10px] font-bold tracking-wider">Sin validar</span>
+                   </div>
+                 )}
+               </div>
+             )}
+          </div>
+        </div>
+
+        {/* Lado Derecho: Botones */}
         {children && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center flex-wrap justify-end gap-2 w-full xl:w-auto shrink-0 mt-2 xl:mt-0">
             {children}
           </div>
         )}
       </div>
+
     </div>
   );
 };

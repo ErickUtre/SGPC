@@ -7,7 +7,7 @@ const pool = require('../config/db');
 const obtenerResponsables = async (req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT IdUsuario, nombre, apellidoPaterno, apellidoMaterno, correo, puesto FROM Usuario WHERE rol = "Responsable" ORDER BY IdUsuario ASC'
+      'SELECT IdUsuario, CONCAT_WS(" ", nombre, apellidoPaterno, apellidoMaterno, CASE WHEN puesto IS NOT NULL AND puesto != "" THEN CONCAT("- ", puesto) ELSE NULL END) AS nombre, correo FROM Usuario WHERE rol = "Responsable" ORDER BY IdUsuario ASC'
     );
 
     return res.status(200).json({

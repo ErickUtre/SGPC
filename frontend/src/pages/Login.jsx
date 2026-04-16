@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = 'http://localhost:3001/api/auth/login';
+import { API_URL } from '../config';
+
+const LOGIN_API_URL = `${API_URL}/auth/login`;
 
 const Login = () => {
     const navigate = useNavigate();
@@ -18,7 +20,7 @@ const Login = () => {
         setCargando(true);
 
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(LOGIN_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ correo: correo.trim(), contrasena }),
@@ -35,6 +37,9 @@ const Login = () => {
             sessionStorage.setItem('token', data.token);
             sessionStorage.setItem('userRole', data.usuario.rol);
             sessionStorage.setItem('userName', data.usuario.nombre);
+            sessionStorage.setItem('userLN', data.usuario.apellidoPaterno || '');
+            sessionStorage.setItem('userMLN', data.usuario.apellidoMaterno || '');
+            sessionStorage.setItem('userPuesto', data.usuario.puesto || '');
             sessionStorage.setItem('userId', data.usuario.id);
             sessionStorage.setItem('authPassed', 'true');
 

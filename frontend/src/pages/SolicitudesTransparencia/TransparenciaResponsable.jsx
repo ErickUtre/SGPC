@@ -10,6 +10,7 @@ const SolicitudesTransparenciaResponsable = () => {
   const oficioInputRef = useRef(null);
   const state = useTransparencia([]);
   const [solicitudProrroga, setSolicitudProrroga] = useState(null);
+  const [motivoProrroga, setMotivoProrroga] = useState('');
   const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
   
   // Estado para saber a qué solicitud le estamos subiendo/modificando la evidencia
@@ -103,7 +104,11 @@ const SolicitudesTransparenciaResponsable = () => {
       const token = sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/solicitudes/${solicitudProrroga.idOriginal}/prorroga`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ motivo: motivoProrroga })
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
@@ -118,6 +123,7 @@ const SolicitudesTransparenciaResponsable = () => {
       window.alert('Error al conectar con el servidor.');
     } finally {
       setSolicitudProrroga(null);
+      setMotivoProrroga('');
     }
   };
 
@@ -223,20 +229,36 @@ const SolicitudesTransparenciaResponsable = () => {
       {solicitudProrroga && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
           <div className="bg-white rounded-[2rem] shadow-2xl max-w-md w-full p-8 flex flex-col gap-6 relative transform transition-all">
-            <h3 className="text-2xl font-bold text-gray-800 tracking-tight">Solicitar prórroga</h3>
-            <p className="text-gray-600 font-medium leading-relaxed text-lg">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Solicitar prórroga</h3>
+            <p className="text-gray-600 font-medium leading-relaxed text-sm">
               ¿Seguro que quieres solicitar una prórroga de la solicitud <span className="font-bold text-[#1e4b8f]">{solicitudProrroga.nombre}</span>?
             </p>
-            <div className="flex gap-3 justify-end mt-4">
+            
+            <div className="flex flex-col gap-2 mt-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Motivo de la prórroga <span className="text-red-400">*</span></label>
+              <textarea
+                value={motivoProrroga}
+                onChange={(e) => setMotivoProrroga(e.target.value)}
+                maxLength={500}
+                rows={4}
+                placeholder="Explica brevemente por qué necesitas más tiempo... (máx 500 caracteres)"
+                className="w-full border-2 border-gray-100 rounded-xl p-3 text-sm resize-none focus:border-[#1e4b8f] outline-none transition-colors"
+                required
+              />
+              <span className="text-[10px] text-gray-400 text-right font-medium">{motivoProrroga.length}/500</span>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-2">
               <button
-                onClick={() => setSolicitudProrroga(null)}
+                onClick={() => { setSolicitudProrroga(null); setMotivoProrroga(''); }}
                 className="px-6 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSolicitarProrroga}
-                className="px-6 py-2.5 rounded-xl font-bold text-white bg-[#1e4b8f] hover:bg-blue-800 transition-all shadow-md hover:shadow-lg active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                disabled={!motivoProrroga.trim()}
+                className="px-6 py-2.5 rounded-xl font-bold text-white bg-[#1e4b8f] hover:bg-blue-800 transition-all shadow-md hover:shadow-lg active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Confirmar
               </button>
