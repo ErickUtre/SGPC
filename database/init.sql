@@ -124,14 +124,14 @@ CREATE TABLE IF NOT EXISTS Notificacion (
 
 -- Usuarios de cada rol (Contraseña: password123 para todos, ya hasheada)
 INSERT INTO Usuario (nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupacion, puesto, ocupacion, correo, contrasena, rol) VALUES 
-('Admin', 'Sistemas', 'TI', 'Ing.', 'Administrador de Sistemas', 'Ingeniero', 'ti@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'TI'),
-('Norma Hilda', 'Jiménez', 'Martínez', 'M.A.P.', 'Contralora General', 'Contralora', 'contralora@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Contralora'),
-('Sra.', 'Secretaria', 'Gral.', 'Lic.', 'Secretaria Particular', 'Secretaria', 'secretaria@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Secretaria'),
-('María del Carmen', 'Peña', 'Cabrera', 'C.P.', 'Directora de Auditoría', 'Contadora', 'control@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
-('Juan', 'Pérez', 'Gómez', 'Ing.', 'Director de Obras', 'Ingeniero Civil', 'juan@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
-('Ana', 'López', 'Ruiz', 'Lic.', 'Directora de Finanzas', 'Licenciada en Contaduría', 'ana@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
-('Carlos', 'García', 'Méndez', 'Ing.', 'Director de SIU', 'Ingeniero en Sistemas', 'carlos@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable');
+('Norma Hilda', 'Jiménez', 'Martínez', 'M.A.P.', 'Contralora General', 'Contralora', 'normajimenez@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Contralora'),
+('David', 'Medrano', 'Mendoza', 'Ing.', 'Unidad de Informática', 'Ingeniero', 'dmedrano@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'TI'),
+('Luis David', 'Hoz', 'Morales', 'Lic.', 'Coordinación Administrativa', 'Administrativo', 'lhoz@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
+('María del Carmen', 'Peña', 'Cabrera', 'C.P.', 'Directora de Auditoría', 'Contadora', 'capena@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
+('José Alberto', 'Aguilar', 'Segura', 'Lic.', 'Director de Control y Evaluación', 'Evaluador', 'alaguilar@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
+('José Ángel Santos', 'Juárez', 'Pérez', 'Lic.', 'Director de Responsabilidades Administrativas y Situación Patrimonial', 'Abogado', 'drasp@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
+('Rocio', 'Ladron de Guevara', 'López', 'Lic.', 'Secretaria', 'Secretaria', 'secretaria@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Secretaria');
 
--- Datos específicos para los usuarios Responsables (IDs del 4 al 7)
-INSERT INTO UsuarioResponsable (IdUsuario) VALUES 
-(4), (5), (6), (7);
+-- Datos específicos para los usuarios Responsables
+INSERT INTO UsuarioResponsable (IdUsuario)
+SELECT IdUsuario FROM Usuario WHERE rol = 'Responsable';
