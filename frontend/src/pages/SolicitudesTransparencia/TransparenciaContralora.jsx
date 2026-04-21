@@ -37,7 +37,7 @@ const SolicitudesTransparenciaContralora = () => {
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     if (!token) {
-      console.warn("[Frontend] No hay token en sessionStorage");
+
       setCargandoSolicitudes(false);
       setCargandoResponsables(false);
       return;
@@ -55,7 +55,7 @@ const SolicitudesTransparenciaContralora = () => {
       return res.json();
     })
     .then(data => {
-      console.log("[Frontend] Respuesta solicitudes:", data);
+
       if (data.ok) {
         state.setSolicitudes(data.solicitudes.map(normalizarSolicitudReal));
         setErrorCarga('');
@@ -64,7 +64,7 @@ const SolicitudesTransparenciaContralora = () => {
       }
     })
     .catch(err => {
-      console.error("[Frontend] Error fetch solicitudes:", err);
+
       setErrorCarga('No se pudo conectar con el servidor para obtener las solicitudes.');
     })
     .finally(() => setCargandoSolicitudes(false));
@@ -78,12 +78,12 @@ const SolicitudesTransparenciaContralora = () => {
       return res.json();
     })
     .then(data => {
-      console.log("[Frontend] Respuesta responsables:", data);
+
       if (data.ok) {
         setResponsables(data.usuarios);
       }
     })
-    .catch(err => console.error("[Frontend] Error fetch responsables:", err))
+
     .finally(() => setCargandoResponsables(false));
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -365,54 +365,63 @@ const SolicitudesTransparenciaContralora = () => {
           <SolicitudCard key={sol.id} solicitud={sol} isContraloraView={true} onVerClick={() => abrirArchivoPNTEnPestana(sol)}>
             {!sol.cancelada && (
               <div className="flex flex-col sm:flex-row items-center gap-4 flex-wrap w-full">
-                <div className="relative w-full sm:w-auto">
-                  <button
-                    onClick={() => { setSolicitudSeleccionada(sol); setModalProrroga(true); }}
-                    className="w-full sm:w-auto px-4 py-2 text-[10px] font-bold border-2 border-orange-500 text-orange-500 rounded-xl hover:bg-orange-500 hover:text-white transition-all active:scale-95 whitespace-nowrap"
-                  >
-                    Ver solicitudes de prórroga
-                  </button>
-                  {sol.solicitudesProrrogaCount > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white animate-pulse">
-                      {sol.solicitudesProrrogaCount}
-                    </span>
-                  )}
-                </div>
-                {!sol.asignada ? (
-                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                {!sol.validada && (
+                  <div className="relative w-full sm:w-auto">
                     <button
-                      onClick={() => { setSolicitudSeleccionada(sol); setModalAsignar(true); }}
-                      className="bg-[#009642] text-white px-6 py-2 rounded-xl font-bold text-xs shadow-md hover:bg-green-700 transition-all active:scale-95"
+                      onClick={() => { setSolicitudSeleccionada(sol); setModalProrroga(true); }}
+                      className="w-full sm:w-auto px-4 py-2 text-[10px] font-bold border-2 border-orange-500 text-orange-500 rounded-xl hover:bg-orange-500 hover:text-white transition-all active:scale-95 whitespace-nowrap"
                     >
-                      Asignar
+                      Ver solicitudes de prórroga
                     </button>
-                    <button
-                      onClick={() => abrirModalCancelar(sol)}
-                      className="px-3 py-2 text-[10px] font-bold border-2 border-gray-400 text-gray-500 rounded-xl hover:bg-gray-400 hover:text-white transition-all active:scale-95"
-                    >
-                      Cancelar
-                    </button>
+                    {sol.solicitudesProrrogaCount > 0 && (
+                      <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white animate-pulse">
+                        {sol.solicitudesProrrogaCount}
+                      </span>
+                    )}
                   </div>
+                )}
+                
+                {!sol.asignada ? (
+                  !sol.validada && (
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                      <button
+                        onClick={() => { setSolicitudSeleccionada(sol); setModalAsignar(true); }}
+                        className="bg-[#009642] text-white px-6 py-2 rounded-xl font-bold text-xs shadow-md hover:bg-green-700 transition-all active:scale-95"
+                      >
+                        Asignar
+                      </button>
+                      <button
+                        onClick={() => abrirModalCancelar(sol)}
+                        className="px-3 py-2 text-[10px] font-bold border-2 border-gray-400 text-gray-500 rounded-xl hover:bg-gray-400 hover:text-white transition-all active:scale-95"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )
                 ) : (
                   <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <button
-                      onClick={() => abrirModalReasignar(sol)}
-                      className="px-3 py-2 text-[10px] font-bold border-2 border-yellow-500 text-yellow-500 rounded-xl hover:bg-yellow-500 hover:text-white transition-all active:scale-95"
-                    >
-                      Reasignar
-                    </button>
+                    {!sol.validada && (
+                      <button
+                        onClick={() => abrirModalReasignar(sol)}
+                        className="px-3 py-2 text-[10px] font-bold border-2 border-yellow-500 text-yellow-500 rounded-xl hover:bg-yellow-500 hover:text-white transition-all active:scale-95"
+                      >
+                        Reasignar
+                      </button>
+                    )}
                     <button
                       onClick={() => { setSolicitudSeleccionada(sol); setModalAbierta(true); }}
                       className="bg-[#1e4b8f] text-white px-6 py-2 rounded-xl font-bold text-xs shadow-md hover:bg-[#153566] transition-all active:scale-95"
                     >
                       Ver Respuesta
                     </button>
-                    <button
-                      onClick={() => abrirModalCancelar(sol)}
-                      className="px-3 py-2 text-[10px] font-bold border-2 border-gray-400 text-gray-500 rounded-xl hover:bg-gray-400 hover:text-white transition-all active:scale-95"
-                    >
-                      Cancelar
-                    </button>
+                    {!sol.validada && (
+                      <button
+                        onClick={() => abrirModalCancelar(sol)}
+                        className="px-3 py-2 text-[10px] font-bold border-2 border-gray-400 text-gray-500 rounded-xl hover:bg-gray-400 hover:text-white transition-all active:scale-95"
+                      >
+                        Cancelar
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -421,7 +430,7 @@ const SolicitudesTransparenciaContralora = () => {
         ))}
       </TransparenciaLayout>
 
-      {/* MODAL ASIGNAR RESPONSABLES */}
+
       {modalAsignar && (
         <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200">
@@ -460,7 +469,7 @@ const SolicitudesTransparenciaContralora = () => {
                 )}
               </div>
 
-              {/* Mensaje de Error */}
+
               {errorAsignar && (
                 <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="flex items-center gap-2 mb-1">
@@ -504,7 +513,7 @@ const SolicitudesTransparenciaContralora = () => {
         </div>
       )}
 
-      {/* MODAL VER RESPUESTA CON VALIDACIÓN */}
+
       {modalAbierta && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300">
@@ -582,7 +591,7 @@ const SolicitudesTransparenciaContralora = () => {
         </div>
       )}
 
-      {/* MODAL CONFIRMAR VALIDACIÓN */}
+
       {modalValidar && (
         <div className="fixed inset-0 bg-black/60 z-[130] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
@@ -611,7 +620,7 @@ const SolicitudesTransparenciaContralora = () => {
         </div>
       )}
 
-      {/* MODAL CONFIRMAR CANCELACIÓN */}
+
       {modalCancelar && (
         <div className="fixed inset-0 bg-black/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
@@ -640,7 +649,7 @@ const SolicitudesTransparenciaContralora = () => {
         </div>
       )}
 
-      {/* MODAL VER SOLICITUDES DE PRORROGA */}
+
       {modalProrroga && (
         <div className="fixed inset-0 bg-black/60 z-[140] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200">
@@ -683,8 +692,8 @@ const SolicitudesTransparenciaContralora = () => {
                           </div>
                         </div>
                         {pet.motivo && motivoExpandidoId === pet.IdProrroga && (
-                          <div className="bg-orange-50 border border-orange-100/60 rounded-lg p-3 text-xs text-gray-700 font-medium italic mt-1 leading-relaxed relative animate-in fade-in slide-in-from-top-1 duration-200">
-                            "{pet.motivo}"
+                          <div className="bg-orange-50 border border-orange-100/60 rounded-lg p-3 text-xs text-gray-700 font-medium mt-1 leading-relaxed relative animate-in fade-in slide-in-from-top-1 duration-200 break-words whitespace-pre-wrap">
+                            {pet.motivo}
                           </div>
                         )}
                       </div>

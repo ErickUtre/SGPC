@@ -6,6 +6,8 @@ export const TransparenciaLayout = ({
   headerActions,
   filtro, setFiltro,
   busqueda, setBusqueda,
+  anio, setAnio,
+  añosDisponibles,
   conteo,
   children 
 }) => {
@@ -20,6 +22,8 @@ export const TransparenciaLayout = ({
         <FiltrosTransparencia 
           filtro={filtro} setFiltro={setFiltro}
           busqueda={busqueda} setBusqueda={setBusqueda}
+          anio={anio} setAnio={setAnio}
+          añosDisponibles={añosDisponibles}
           conteo={conteo}
         />
 

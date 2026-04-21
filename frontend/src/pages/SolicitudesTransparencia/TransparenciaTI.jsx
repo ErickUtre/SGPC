@@ -24,8 +24,6 @@ const SolicitudesTransparenciaTI = () => {
   const [cargandoRegistro, setCargandoRegistro] = useState(false);
   const [errorModal, setErrorModal] = useState('');
   const [operacionSolicitudId, setOperacionSolicitudId] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
-  const [solicitudAEliminar, setSolicitudAEliminar] = useState(null);
   const [modalCapturaAbierta, setModalCapturaAbierta] = useState(false);
   const [capturaPreviewUrl, setCapturaPreviewUrl] = useState('');
   const [capturaPreviewNombre, setCapturaPreviewNombre] = useState('');
@@ -37,7 +35,7 @@ const SolicitudesTransparenciaTI = () => {
   // El estado base incluye solicitudes reales de BD
   const state = useTransparencia([]);
 
-  // ── Cargar solicitudes al montar ───────────────────────────────────────────
+
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     setCargandoSolicitudes(true);
@@ -90,7 +88,7 @@ const SolicitudesTransparenciaTI = () => {
     if (!solicitudSeleccionada) return;
     try {
       const token = sessionStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/solicitudes/${solicitudSeleccionada.idOriginal}/paquete`, {
+      const response = await fetch(`${API_BASE}/solicitudes/${solicitudSeleccionada.idOriginal}/paquete?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -135,7 +133,7 @@ const SolicitudesTransparenciaTI = () => {
     }
   };
 
-  // ── Cerrar dropdown al click fuera ────────────────────────────────────────
+
   useEffect(() => {
     if (dropdownAbierto === null) return;
     const handler = () => setDropdownAbierto(null);
@@ -283,35 +281,8 @@ const SolicitudesTransparenciaTI = () => {
     }
   };
 
-  const solicitarEliminarSolicitud = (sol) => {
-    setSolicitudAEliminar(sol);
-    setModalEliminarAbierto(true);
-  };
 
-  const handleEliminarSolicitud = async () => {
-    if (!solicitudAEliminar) return;
 
-    try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/solicitudes/${solicitudAEliminar.idOriginal}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) {
-        window.alert(data.mensaje || 'No se pudo eliminar la solicitud.');
-        return;
-      }
-
-      state.setSolicitudes(state.solicitudes.filter((item) => item.id !== solicitudAEliminar.id));
-      setModalEliminarAbierto(false);
-      setSolicitudAEliminar(null);
-    } catch {
-      window.alert('No se pudo conectar con el servidor.');
-    }
-  };
-
-  // ── Registrar nueva solicitud ──────────────────────────────────────────────
   const handleRegistrar = async () => {
     if (!nuevaSolicitudArchivo || nuevaSolicitudNombre.trim() === '' || nuevaSolicitudFolio.trim() === '') return;
     
@@ -451,9 +422,17 @@ const SolicitudesTransparenciaTI = () => {
                     <div className="absolute left-0 bottom-full mb-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[200px]">
                       <button onClick={() => { iniciarEdicion(sol); setDropdownAbierto(null); }} className="w-full text-left px-4 py-2.5 text-[11px] font-bold text-gray-500 hover:bg-gray-50 transition-colors">Cambiar nombre</button>
                       <button onClick={() => { seleccionarSolicitudRealOperacion(sol, fileInputRef); setDropdownAbierto(null); }} className="w-full text-left px-4 py-2.5 text-[11px] font-bold text-gray-500 hover:bg-gray-50 transition-colors">Cambiar archivo</button>
-                      <button onClick={() => { seleccionarSolicitudRealOperacion(sol, capturaInputRef); setDropdownAbierto(null); }} className="w-full text-left px-4 py-2.5 text-[11px] font-bold text-gray-500 hover:bg-gray-50 transition-colors">Subir captura de entrega</button>
-                      <div className="border-t border-gray-100 my-1" />
-                      <button onClick={() => { solicitarEliminarSolicitud(sol); setDropdownAbierto(null); }} className="w-full text-left px-4 py-2.5 text-[11px] font-bold text-red-600 hover:bg-red-50 transition-colors">Eliminar</button>
+                      <button 
+                        disabled={!sol.validada}
+                        onClick={() => { seleccionarSolicitudRealOperacion(sol, capturaInputRef); setDropdownAbierto(null); }} 
+                        className={`w-full text-left px-4 py-2.5 text-[11px] font-bold transition-colors ${
+                          sol.validada 
+                            ? 'text-gray-700 hover:bg-gray-50' 
+                            : 'text-gray-300 cursor-not-allowed'
+                        }`}
+                      >
+                        Subir captura de entrega { !sol.validada && '(Espera validación)' }
+                      </button>
                     </div>
                   )}
                 </div>
@@ -466,14 +445,6 @@ const SolicitudesTransparenciaTI = () => {
                 Ver Respuesta
               </button>
 
-              {sol.cancelada && (
-                <button
-                  onClick={() => solicitarEliminarSolicitud(sol)}
-                  className="bg-red-600 text-white px-6 py-2 rounded-xl font-bold text-xs shadow-md transition-all hover:bg-red-700 active:scale-95 animate-in fade-in zoom-in duration-300"
-                >
-                  Eliminar Definitivamente
-                </button>
-              )}
               {!sol.cancelada && sol.capturaEntregaDisponible && (
                 <button
                   onClick={() => verCapturaEntrega(sol)}
@@ -487,7 +458,7 @@ const SolicitudesTransparenciaTI = () => {
         )}
       </TransparenciaLayout>
 
-      {/* ── Modal Ver Respuesta ──────────────────────────────────────────────── */}
+
       {modalAbierta && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in duration-300">
@@ -559,7 +530,7 @@ const SolicitudesTransparenciaTI = () => {
         </div>
       )}
 
-      {/* ── Modal Nueva Solicitud ────────────────────────────────────────────── */}
+
       {modalNuevaSolicitudAbierta && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
@@ -627,7 +598,10 @@ const SolicitudesTransparenciaTI = () => {
                       ref={nuevaSolicitudFileInputRef}
                       className="hidden"
                       accept=".pdf,.docx"
-                      onChange={(e) => setNuevaSolicitudArchivo(e.target.files[0])}
+                      onChange={(e) => {
+                        setNuevaSolicitudArchivo(e.target.files[0]);
+                        e.target.value = '';
+                      }}
                     />
                     <button
                       onClick={() => nuevaSolicitudFileInputRef.current.click()}
@@ -649,7 +623,10 @@ const SolicitudesTransparenciaTI = () => {
                   <span className="text-lg">📄</span>
                   <span className="text-sm text-gray-700 font-medium truncate flex-1">{nuevaSolicitudArchivo.name}</span>
                   <button
-                    onClick={() => setNuevaSolicitudArchivo(null)}
+                    onClick={() => {
+                      setNuevaSolicitudArchivo(null);
+                      if (nuevaSolicitudFileInputRef.current) nuevaSolicitudFileInputRef.current.value = '';
+                    }}
                     disabled={cargandoRegistro}
                     className="text-red-500 hover:text-red-700 font-bold p-1 bg-red-50 rounded-lg h-8 w-8 flex items-center justify-center transition-colors"
                     title="Quitar archivo"
@@ -694,43 +671,8 @@ const SolicitudesTransparenciaTI = () => {
         </div>
       )}
 
-      {/* ── Modal Confirmar Eliminación ─────────────────────────────────────── */}
-      {modalEliminarAbierto && (
-        <div className="fixed inset-0 bg-black/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-red-600 p-5 text-white text-center font-bold text-xs tracking-widest">
-              Eliminar Solicitud
-            </div>
-            <div className="p-8 text-center">
-              <p className="text-gray-700 font-bold text-sm mb-4 leading-relaxed">
-                ¿Seguro que quieres eliminar definitivamente esta solicitud?
-              </p>
-              <p className="text-gray-900 font-black text-base mb-4 break-words underline decoration-red-500">
-                "{solicitudAEliminar?.nombre}"
-              </p>
-              <p className="text-red-600 font-bold text-[11px] uppercase tracking-tighter mb-8 bg-red-50 p-3 rounded-lg border border-red-100">
-                Esta acción borrará permanentemente todos los archivos PDF, evidencias de responsables y oficios. No quedará rastro en el sistema.
-              </p>
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={() => { setModalEliminarAbierto(false); setSolicitudAEliminar(null); }}
-                  className="px-8 py-3 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleEliminarSolicitud}
-                  className="bg-red-600 text-white px-10 py-3 rounded-xl font-bold text-xs shadow-md hover:bg-red-700 transition-all active:scale-95"
-                >
-                  Confirmar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ── Modal Ver Captura de Entrega ────────────────────────────────────── */}
+
       {modalCapturaAbierta && (
         <div className="fixed inset-0 bg-black/60 z-[125] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in duration-200">

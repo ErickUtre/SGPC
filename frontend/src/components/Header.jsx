@@ -22,6 +22,7 @@ const Header = () => {
     else if (role === 'Contralora') navigate('/transparencia/contralora');
     else if (role === 'Responsable') navigate('/transparencia/responsable');
     else if (role === 'Secretaria') navigate('/transparencia/secretaria');
+    else if (role === 'Supervisor') navigate('/transparencia/supervisor');
   };
 
   const cerrarSesion = () => {
@@ -35,7 +36,7 @@ const Header = () => {
 
   return (
     <header className="bg-white text-gray-800 border-b border-gray-200 flex justify-between items-center px-4 md:px-8 py-3 z-50 sticky top-0 w-full shadow-sm transition-colors">
-      {/* Lado izquierdo */}
+
       <div className="flex items-center gap-3 md:gap-6 min-w-0">
         <button
           onClick={() => navigate('/dashboard')}
@@ -60,9 +61,9 @@ const Header = () => {
         </nav>
       </div>
 
-      {/* Lado derecho */}
+
       <div className="flex items-center gap-3 md:gap-5 shrink-0">
-        {/* Notificaciones */}
+
         <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setNotifAbierto(!notifAbierto); }}
