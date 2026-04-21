@@ -13,7 +13,7 @@ const SolicitudesTransparenciaResponsable = () => {
   const [motivoProrroga, setMotivoProrroga] = useState('');
   const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
   
-  // Estado para saber a qué solicitud le estamos subiendo/modificando la evidencia
+
   const [solicitudEnAccion, setSolicitudEnAccion] = useState(null);
   const [isSubiendo, setIsSubiendo] = useState(false);
 
@@ -189,43 +189,49 @@ const SolicitudesTransparenciaResponsable = () => {
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                       Ver respuesta
                     </button>
+                    {!sol.validada && (
+                      <button
+                        onClick={() => abrirInputRespuesta(sol)}
+                        disabled={isSubiendo}
+                        className="px-3 py-1.5 text-[10px] font-bold border-2 border-orange-500 text-orange-600 rounded-lg transition-all hover:bg-orange-500 hover:text-white active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Modificar respuesta
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  !sol.validada && (
                     <button
                       onClick={() => abrirInputRespuesta(sol)}
                       disabled={isSubiendo}
-                      className="px-3 py-1.5 text-[10px] font-bold border-2 border-orange-500 text-orange-600 rounded-lg transition-all hover:bg-orange-500 hover:text-white active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 text-[10px] font-bold border-2 border-emerald-600 text-emerald-600 rounded-lg transition-all hover:bg-emerald-600 hover:text-white active:scale-95 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Modificar respuesta
+                      {isSubiendo && solicitudEnAccion?.id === sol.id ? 'Subiendo...' : 'Subir respuesta'}
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => abrirInputRespuesta(sol)}
-                    disabled={isSubiendo}
-                    className="px-3 py-1.5 text-[10px] font-bold border-2 border-emerald-600 text-emerald-600 rounded-lg transition-all hover:bg-emerald-600 hover:text-white active:scale-95 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubiendo && solicitudEnAccion?.id === sol.id ? 'Subiendo...' : 'Subir respuesta'}
-                  </button>
+                  )
                 )}
 
-                <button
-                  onClick={() => {
-                    if (sol.yaSolicitoProrroga) {
-                      window.alert('Ya hay una prorroga en curso');
-                    } else {
-                      setSolicitudProrroga(sol);
-                    }
-                  }}
-                  className="px-3 py-1.5 text-[10px] font-bold border-2 border-gray-500 text-gray-500 rounded-lg transition-all hover:bg-gray-500 hover:text-white active:scale-95 whitespace-nowrap"
-                >
-                  Solicitar prórroga
-                </button>
+                {!sol.validada && (
+                  <button
+                    onClick={() => {
+                      if (sol.yaSolicitoProrroga) {
+                        window.alert('Ya hay una prorroga en curso');
+                      } else {
+                        setSolicitudProrroga(sol);
+                      }
+                    }}
+                    className="px-3 py-1.5 text-[10px] font-bold border-2 border-gray-500 text-gray-500 rounded-lg transition-all hover:bg-gray-500 hover:text-white active:scale-95 whitespace-nowrap"
+                  >
+                    Solicitar prórroga
+                  </button>
+                )}
               </>
             )}
           </SolicitudCard>
         ))}
       </TransparenciaLayout>
 
-      {/* Modal de Prórroga */}
+
       {solicitudProrroga && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
           <div className="bg-white rounded-[2rem] shadow-2xl max-w-md w-full p-8 flex flex-col gap-6 relative transform transition-all">

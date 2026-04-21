@@ -11,15 +11,22 @@ const filtroActivo = {
 };
 const filtroInactivo = 'bg-white text-gray-500 border-gray-200 hover:border-gray-400';
 
-export const FiltrosTransparencia = ({ filtro, setFiltro, busqueda, setBusqueda, conteo }) => {
+export const FiltrosTransparencia = ({ 
+  filtro, setFiltro, 
+  busqueda, setBusqueda, 
+  anio, setAnio,
+  añosDisponibles,
+  conteo 
+}) => {
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
+
+      <div className="flex flex-nowrap items-center gap-2">
         {FILTROS_TRANSPARENCIA.map(f => (
           <button
             key={f}
             onClick={() => setFiltro(f)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border font-bold text-xs tracking-wider transition-all active:scale-95 ${filtro === f ? filtroActivo[f] : filtroInactivo}`}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border font-bold text-[11px] tracking-tight transition-all active:scale-95 shrink-0 ${filtro === f ? filtroActivo[f] : filtroInactivo}`}
           >
             {f}
             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${filtro === f ? 'bg-white/25' : 'bg-gray-100 text-gray-500'}`}>
@@ -29,17 +36,39 @@ export const FiltrosTransparencia = ({ filtro, setFiltro, busqueda, setBusqueda,
         ))}
       </div>
 
-      <div className="relative w-full md:w-auto mt-2 md:mt-0">
-        <input
-          type="text"
-          placeholder="Buscar por nombre o folio..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="w-full md:w-72 pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e4b8f] focus:border-transparent transition-all"
-        />
-        <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+
+      <div className="flex items-center gap-3 w-full lg:w-auto mt-2 lg:mt-0">
+
+        <div className="relative shrink-0">
+          <select
+            value={anio}
+            onChange={(e) => setAnio(parseInt(e.target.value))}
+            className="appearance-none bg-white border border-gray-300 rounded-xl px-4 pr-10 py-2 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#1e4b8f] focus:border-transparent transition-all cursor-pointer shadow-sm min-w-[90px]"
+          >
+            {añosDisponibles.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+
+        <div className="relative flex-1 lg:w-64">
+          <input
+            type="text"
+            placeholder="Buscar por nombre o folio..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-[#1e4b8f] focus:border-transparent transition-all shadow-sm"
+          />
+          <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
       </div>
     </div>
   );

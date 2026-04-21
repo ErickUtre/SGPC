@@ -3,7 +3,7 @@ const AdmZip = require('adm-zip');
 const { generarOficioPDF } = require('../utils/oficioGenerator');
 const path = require('path');
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+
 
 /** Formatea un Date string (UTC de MySQL) a "DD/MM/YYYY" en CST (UTC-6) */
 const formatFecha = (dateStr) => {
@@ -63,7 +63,7 @@ const fixFilenameEncoding = (filename) => {
 };
 
 
-// ── GET /api/solicitudes ───────────────────────────────────────────────────
+
 /**
  * Devuelve todas las solicitudes con el formato esperado por el frontend.
  */
@@ -107,13 +107,13 @@ const obtenerSolicitudes = async (req, res, next) => {
     }
 
     if (rol === 'Secretaria') {
-      // Solo ve solicitudes con captura de entrega y al menos una respuesta
-      whereConditions.push(`s.IdCapturaEntrega IS NOT NULL`);
-      whereConditions.push(`(SELECT COUNT(*) 
-                             FROM EvidenciaResponsable er3 
-                             INNER JOIN Respuesta r3 ON er3.IdRespuesta = r3.IdRespuesta 
-                             WHERE r3.IdSolicitud = s.IdSolicitud) > 0`);
+      // Puede ver todas las solicitudes no canceladas desde que TI las registra
       whereConditions.push(`s.cancelada = FALSE`);
+    }
+
+    if (rol === 'Supervisor') {
+      // El Supervisor puede ver todas las solicitudes, incluyendo las canceladas
+      // No agregamos restricción de cancelada
     }
 
     if (whereConditions.length > 0) {
@@ -156,7 +156,7 @@ const obtenerSolicitudes = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/archivo-pnt ───────────────────────────────────
+
 const obtenerArchivoPNT = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -185,7 +185,7 @@ const obtenerArchivoPNT = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/captura-entrega ───────────────────────────────
+
 const obtenerCapturaEntrega = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -214,7 +214,7 @@ const obtenerCapturaEntrega = async (req, res, next) => {
   }
 };
 
-// ── POST /api/solicitudes ──────────────────────────────────────────────────
+
 /**
  * Crea una nueva solicitud.
  * Body (multipart/form-data):
@@ -228,9 +228,7 @@ const crearSolicitud = async (req, res, next) => {
     const { nombre, folio, diasMaximos } = req.body;
     const archivo = req.file;
 
-    console.log('[DEBUG] crearSolicitud - Body:', req.body);
-    console.log('[DEBUG] crearSolicitud - File:', archivo ? archivo.originalname : 'No file');
-    console.log('[DEBUG] crearSolicitud - IdUsuarioTI:', req.usuario?.IdUsuario);
+
 
     // Validaciones
     if (!nombre || nombre.trim() === '') {
@@ -308,7 +306,7 @@ const crearSolicitud = async (req, res, next) => {
   }
 };
 
-// ── PUT /api/solicitudes/:id/nombre ────────────────────────────────────────
+
 const actualizarNombreSolicitud = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -336,7 +334,7 @@ const actualizarNombreSolicitud = async (req, res, next) => {
   }
 };
 
-// ── PUT /api/solicitudes/:id/archivo ───────────────────────────────────────
+
 const actualizarArchivoSolicitud = async (req, res, next) => {
   const conn = await pool.getConnection();
   try {
@@ -378,7 +376,7 @@ const actualizarArchivoSolicitud = async (req, res, next) => {
   }
 };
 
-// ── POST /api/solicitudes/:id/captura-entrega ──────────────────────────────
+
 const subirCapturaEntrega = async (req, res, next) => {
   const conn = await pool.getConnection();
   try {
@@ -481,7 +479,7 @@ const eliminarSolicitud = async (req, res, next) => {
   }
 };
 
-// ── POST /api/solicitudes/:id/turnar ─────────────────────────────────────────
+
 /**
  * Asigna (turna) una solicitud a uno o más responsables.
  * Body: { idsResponsables: number[] }
@@ -582,7 +580,7 @@ const turnarSolicitud = async (req, res, next) => {
   }
 };
 
-// ── POST /api/solicitudes/:id/evidencia-responsable ─────────────────────────────────────────
+
 const subirEvidenciaResponsable = async (req, res, next) => {
   const conn = await pool.getConnection();
   try {
@@ -648,7 +646,7 @@ const subirEvidenciaResponsable = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/evidencia-responsable ─────────────────────────────────────────
+
 const obtenerEvidenciaResponsable = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -680,7 +678,7 @@ const obtenerEvidenciaResponsable = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/evidencias ─────────────────────────────────────────
+
 const obtenerListaEvidencias = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -711,7 +709,7 @@ const obtenerListaEvidencias = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/evidencia/:idEvidencia/download ───────────────────────
+
 const descargarEvidenciaPorId = async (req, res, next) => {
   try {
     const idEvidencia = Number(req.params.idEvidencia);
@@ -741,7 +739,7 @@ const descargarEvidenciaPorId = async (req, res, next) => {
   }
 };
 
-// ── POST /api/solicitudes/:id/prorroga ───────────────────────────────────────
+
 const solicitarProrroga = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -764,7 +762,7 @@ const solicitarProrroga = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/prorrogas ────────────────────────────────────────
+
 const obtenerPeticionesProrroga = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -788,7 +786,7 @@ const obtenerPeticionesProrroga = async (req, res, next) => {
   }
 };
 
-// ── PUT /api/solicitudes/:id/prorroga ─────────────────────────────────────────
+
 const asignarProrroga = async (req, res, next) => {
   const conn = await pool.getConnection();
   try {
@@ -820,7 +818,7 @@ const asignarProrroga = async (req, res, next) => {
   }
 };
 
-// ── PUT /api/solicitudes/:id/cancelar ───────────────────────────────────────
+
 const cancelarSolicitud = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -837,7 +835,7 @@ const cancelarSolicitud = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/turnados ────────────────────────────────────────
+
 const obtenerTurnados = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -857,17 +855,19 @@ const obtenerTurnados = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/paquete ────────────────────────────────────────
+
 const generarPaqueteZip = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
+    const rol = req.usuario?.rol;
+
     if (!Number.isInteger(idSolicitud) || idSolicitud <= 0) {
       return res.status(400).json({ ok: false, mensaje: 'Id de solicitud inválido.' });
     }
 
     // 1. Obtener nombre de la solicitud
     const [solRows] = await pool.query(
-      `SELECT nombreSolicitud FROM Solicitud WHERE IdSolicitud = ?`,
+      `SELECT nombreSolicitud, IdArchivoPNT, IdCapturaEntrega FROM Solicitud WHERE IdSolicitud = ?`,
        [idSolicitud]
     );
 
@@ -878,30 +878,92 @@ const generarPaqueteZip = async (req, res, next) => {
     const solicitud = solRows[0];
     const zip = new AdmZip();
 
-    // 2. Carpeta raíz: evidencias de responsables
-    const [evidencias] = await pool.query(
-      `SELECT a.nombreArchivo, a.contenido, CONCAT_WS(' ', u.nombre, u.apellidoPaterno, u.apellidoMaterno, CASE WHEN u.puesto IS NOT NULL AND u.puesto != '' THEN CONCAT('- ', u.puesto) ELSE NULL END) AS nombreResponsable
-       FROM EvidenciaResponsable er
-       INNER JOIN Respuesta r ON er.IdRespuesta = r.IdRespuesta
-       INNER JOIN Archivo a ON er.IdArchivoRespuesta = a.IdArchivo
-       INNER JOIN Usuario u ON er.IdUsuarioResponsable = u.IdUsuario
-       WHERE r.IdSolicitud = ?`,
-       [idSolicitud]
-    );
+    if (rol === 'TI') {
+      // --- LÓGICA PARA TI: ZIP plano solo con evidencias ---
+      const [evidencias] = await pool.query(
+        `SELECT a.nombreArchivo, a.contenido, 
+                CONCAT_WS(' ', u.nombre, u.apellidoPaterno, u.apellidoMaterno) AS nombreResponsable
+         FROM EvidenciaResponsable er
+         INNER JOIN Respuesta r ON er.IdRespuesta = r.IdRespuesta
+         INNER JOIN Archivo a ON er.IdArchivoRespuesta = a.IdArchivo
+         INNER JOIN Usuario u ON er.IdUsuarioResponsable = u.IdUsuario
+         WHERE r.IdSolicitud = ?`,
+         [idSolicitud]
+      );
 
-    if (evidencias.length > 0) {
-      evidencias.forEach(ev => {
-        const ext = ev.nombreArchivo.split('.').pop();
-        const base = ev.nombreArchivo.substring(0, ev.nombreArchivo.lastIndexOf('.'));
-        // Sanitizar nombre de responsable para el sistema de archivos
-        const respNameSafe = ev.nombreResponsable.replace(/[^a-z0-9 ]/gi, '').replace(/ /g, '_');
-        const nombreFinal = `${base}_${respNameSafe}.${ext}`;
-        // Agregar a la raíz del ZIP
-        zip.addFile(nombreFinal, ev.contenido);
-      });
+      if (evidencias.length > 0) {
+        evidencias.forEach(ev => {
+          const ext = ev.nombreArchivo.split('.').pop();
+          const base = ev.nombreArchivo.substring(0, ev.nombreArchivo.lastIndexOf('.'));
+          const respNameSafe = ev.nombreResponsable.replace(/[^a-z0-9 ]/gi, '').replace(/ /g, '_');
+          const nombreFinal = `${base}_${respNameSafe}.${ext}`;
+          zip.addFile(nombreFinal, ev.contenido);
+        });
+      }
     } else {
-       // Si no hay evidencias, agregar un archivo informativo
-       zip.addFile(`Aviso.txt`, Buffer.from('No se encontraron evidencias para esta solicitud.'));
+      // --- LÓGICA PARA SECRETARIA/OTROS: ZIP estructurado con subcarpetas ---
+      const [archivosPrincipales] = await pool.query(
+        `SELECT aPNT.nombreArchivo AS nombrePNT, aPNT.contenido AS contenidoPNT,
+                aCap.nombreArchivo AS nombreCaptura, aCap.contenido AS contenidoCaptura
+         FROM Solicitud s
+         LEFT JOIN Archivo aPNT ON s.IdArchivoPNT = aPNT.IdArchivo
+         LEFT JOIN Archivo aCap ON s.IdCapturaEntrega = aCap.IdArchivo
+         WHERE s.IdSolicitud = ?`,
+         [idSolicitud]
+      );
+
+      const solFiles = archivosPrincipales[0];
+
+      // Folder: Solicitud
+      if (solFiles?.contenidoPNT) {
+        zip.addFile(`Solicitud/${solFiles.nombrePNT}`, solFiles.contenidoPNT);
+      }
+
+      // Folder: Captura de evidencia
+      if (solFiles?.contenidoCaptura) {
+        zip.addFile(`Captura de evidencia/${solFiles.nombreCaptura}`, solFiles.contenidoCaptura);
+      }
+
+      // Folder: Oficios turnados
+      const [oficios] = await pool.query(
+        `SELECT a.nombreArchivo, a.contenido
+         FROM TurnadoSolicitud ts
+         INNER JOIN Archivo a ON ts.IdArchivoOficio = a.IdArchivo
+         WHERE ts.IdSolicitud = ?`,
+         [idSolicitud]
+      );
+
+      if (oficios.length > 0) {
+        oficios.forEach(oficio => {
+          zip.addFile(`Oficios turnados/${oficio.nombreArchivo}`, oficio.contenido);
+        });
+      }
+
+      // Folder: Respuesta
+      const [evidencias] = await pool.query(
+        `SELECT a.nombreArchivo, a.contenido, 
+                CONCAT_WS(' ', u.nombre, u.apellidoPaterno, u.apellidoMaterno) AS nombreResponsable
+         FROM EvidenciaResponsable er
+         INNER JOIN Respuesta r ON er.IdRespuesta = r.IdRespuesta
+         INNER JOIN Archivo a ON er.IdArchivoRespuesta = a.IdArchivo
+         INNER JOIN Usuario u ON er.IdUsuarioResponsable = u.IdUsuario
+         WHERE r.IdSolicitud = ?`,
+         [idSolicitud]
+      );
+
+      if (evidencias.length > 0) {
+        evidencias.forEach(ev => {
+          const ext = ev.nombreArchivo.split('.').pop();
+          const base = ev.nombreArchivo.substring(0, ev.nombreArchivo.lastIndexOf('.'));
+          const respNameSafe = ev.nombreResponsable.replace(/[^a-z0-9 ]/gi, '').replace(/ /g, '_');
+          const nombreFinal = `${base}_${respNameSafe}.${ext}`;
+          zip.addFile(`Respuesta/${nombreFinal}`, ev.contenido);
+        });
+      }
+    }
+
+    if (zip.getEntries().length === 0) {
+      zip.addFile(`Aviso.txt`, Buffer.from('No se encontraron archivos para esta solicitud.'));
     }
 
     const zipBuffer = zip.toBuffer();
@@ -912,6 +974,9 @@ const generarPaqueteZip = async (req, res, next) => {
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename="${encodeURIComponent(nombreZip)}"`,
       'Content-Length': zipBuffer.length,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
       'Access-Control-Expose-Headers': 'Content-Disposition'
     });
 
@@ -922,7 +987,7 @@ const generarPaqueteZip = async (req, res, next) => {
   }
 };
 
-// ── PUT /api/solicitudes/:id/resolver ────────────────────────────────────────
+
 const resolverSolicitud = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);
@@ -938,7 +1003,7 @@ const resolverSolicitud = async (req, res, next) => {
   }
 };
 
-// ── GET /api/solicitudes/:id/oficio ──────────────────────────────────────────
+
 const obtenerOficioAsignado = async (req, res, next) => {
   try {
     const idSolicitud = Number(req.params.id);

@@ -25,7 +25,7 @@ export const SolicitudCard = ({
         </button>
       )}
 
-      {/* FILA 1: Título/Folio izquierda, Fechas a la derecha */}
+
       <div className="flex flex-col xl:flex-row justify-between xl:items-start gap-6 pt-10 md:pt-0 pr-16 md:pr-24">
         <div className="flex flex-col gap-1 xl:w-5/12">
           <span className="text-[10px] font-bold text-gray-400 tracking-widest">Folio: {solicitud.folio}</span>
@@ -65,10 +65,10 @@ export const SolicitudCard = ({
         </div>
       </div>
 
-      {/* FILA 2 & 3: Archivo, Estados y Botones */}
+
       <div className="flex flex-col xl:flex-row xl:items-end justify-between border-t border-gray-50 pt-6 gap-6">
         
-        {/* Lado Izquierdo: Documento y Estados */}
+
         <div className="flex flex-col gap-5 flex-1 min-w-0">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-gray-400 mb-1 tracking-wider">Documento Principal</span>
@@ -81,7 +81,7 @@ export const SolicitudCard = ({
           </div>
 
           <div className="flex flex-wrap gap-6">
-             {/* Estado Semaforo */}
+
              <div className="flex flex-col">
                <span className="text-[9px] font-bold text-gray-400 mb-1 tracking-widest uppercase">Estado</span>
                {solicitud.cancelada ? (
@@ -98,7 +98,7 @@ export const SolicitudCard = ({
                )}
              </div>
 
-             {/* Validacion Status */}
+
              {!solicitud.cancelada && (
                <div className="flex flex-col">
                  <span className="text-[9px] font-bold text-gray-400 mb-1 tracking-widest uppercase">Estatus de Validación</span>
@@ -118,7 +118,7 @@ export const SolicitudCard = ({
           </div>
         </div>
 
-        {/* Lado Derecho: Botones */}
+
         {children && (
           <div className="flex items-center flex-wrap justify-end gap-2 w-full xl:w-auto shrink-0 mt-2 xl:mt-0">
             {children}

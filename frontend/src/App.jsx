@@ -1,16 +1,17 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Importamos el Header global
+
 import Header from './components/Header';
 
-// Importamos las páginas
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import SolicitudesTransparenciaTI from './pages/SolicitudesTransparencia/TransparenciaTI';
 import SolicitudesTransparenciaContralora from './pages/SolicitudesTransparencia/TransparenciaContralora';
 import SolicitudesTransparenciaResponsable from './pages/SolicitudesTransparencia/TransparenciaResponsable';
 import SolicitudesTransparenciaSecretaria from './pages/SolicitudesTransparencia/TransparenciaSecretaria';
+import SolicitudesTransparenciaSupervisor from './pages/SolicitudesTransparencia/TransparenciaSupervisor';
 
 const decodeJwtPayload = (token) => {
   try {
@@ -34,6 +35,7 @@ const getRoleHomePath = (role) => {
   if (role === 'Contralora') return '/transparencia/contralora';
   if (role === 'Responsable') return '/transparencia/responsable';
   if (role === 'Secretaria') return '/transparencia/secretaria';
+  if (role === 'Supervisor') return '/transparencia/supervisor';
   return '/dashboard';
 };
 
@@ -62,10 +64,10 @@ function App() {
   return (
     <Router>
       <div className="flex flex-col min-h-screen">
-        {/* LA BARRA GLOBAL: Vive aquí para que se vea en todo el sistema */}
+
         <Header />
         
-        {/* EL CONTENIDO DINÁMICO */}
+
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<Login />} />
@@ -107,6 +109,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['Secretaria']}>
                   <SolicitudesTransparenciaSecretaria />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/transparencia/supervisor"
+              element={
+                <ProtectedRoute allowedRoles={['Supervisor']}>
+                  <SolicitudesTransparenciaSupervisor />
                 </ProtectedRoute>
               }
             />

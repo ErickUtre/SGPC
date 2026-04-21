@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS Usuario (
     ocupacion VARCHAR(100),
     correo VARCHAR(100) UNIQUE NOT NULL,
     contrasena VARCHAR(255) NOT NULL,
-    rol ENUM('Contralora', 'TI', 'Secretaria', 'Responsable') NOT NULL
+    rol ENUM('Contralora', 'TI', 'Secretaria', 'Responsable', 'Supervisor') NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS UsuarioResponsable (
@@ -130,7 +130,8 @@ INSERT INTO Usuario (nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupac
 ('María del Carmen', 'Peña', 'Cabrera', 'C.P.', 'Directora de Auditoría', 'Contadora', 'capena@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
 ('José Alberto', 'Aguilar', 'Segura', 'Lic.', 'Director de Control y Evaluación', 'Evaluador', 'alaguilar@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
 ('José Ángel Santos', 'Juárez', 'Pérez', 'Lic.', 'Director de Responsabilidades Administrativas y Situación Patrimonial', 'Abogado', 'drasp@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
-('Rocio', 'Ladron de Guevara', 'López', 'Lic.', 'Secretaria', 'Secretaria', 'secretaria@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Secretaria');
+('Rocio', 'Ladron de Guevara', 'López', 'Lic.', 'Secretaria', 'Secretaria', 'secretaria@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Secretaria'),
+('Oscar Alberto', 'Gonzáles', 'Castelán', 'M.A.E.', 'Auditor Financiero y Administrativo', 'Contador', 'oscargonzalez@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Supervisor');
 
 -- Datos específicos para los usuarios Responsables
 INSERT INTO UsuarioResponsable (IdUsuario)

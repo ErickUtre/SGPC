@@ -31,7 +31,7 @@ const SolicitudesTransparenciaSecretaria = () => {
     setGenerandoId(sol.id);
     try {
       const token = sessionStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/solicitudes/${sol.idOriginal}/paquete`, {
+      const response = await fetch(`${API_BASE}/solicitudes/${sol.idOriginal}/paquete?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -79,10 +79,10 @@ const SolicitudesTransparenciaSecretaria = () => {
           {!sol.cancelada && (
             <button 
               onClick={() => handleGenerarPaquete(sol)}
-              disabled={generandoId === sol.id}
+              disabled={generandoId === sol.id || !sol.capturaEntregaDisponible}
               className={`px-4 py-2 text-xs font-bold rounded-xl transition-all active:scale-95 whitespace-nowrap shadow-md flex items-center gap-2 ${
-                generandoId === sol.id 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                (generandoId === sol.id || !sol.capturaEntregaDisponible)
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' 
                   : 'bg-emerald-600 text-white hover:bg-emerald-700'
               }`}
             >
