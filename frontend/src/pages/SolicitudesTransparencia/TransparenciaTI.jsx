@@ -27,6 +27,7 @@ const SolicitudesTransparenciaTI = () => {
   const [modalCapturaAbierta, setModalCapturaAbierta] = useState(false);
   const [capturaPreviewUrl, setCapturaPreviewUrl] = useState('');
   const [capturaPreviewNombre, setCapturaPreviewNombre] = useState('');
+  const [subiendoCapturaId, setSubiendoCapturaId] = useState(null);
 
   const [cargandoSolicitudes, setCargandoSolicitudes] = useState(true);
   const [listaEvidencias, setListaEvidencias] = useState([]);
@@ -228,9 +229,13 @@ const SolicitudesTransparenciaTI = () => {
 
     const solicitud = state.solicitudes.find((sol) => sol.id === operacionSolicitudId);
     e.target.value = '';
-    setOperacionSolicitudId(null);
+    
+    if (!solicitud) {
+      setOperacionSolicitudId(null);
+      return;
+    }
 
-    if (!solicitud) return;
+    setSubiendoCapturaId(solicitud.id);
 
     try {
       const token = sessionStorage.getItem('token');
@@ -257,6 +262,9 @@ const SolicitudesTransparenciaTI = () => {
       window.alert('Captura de entrega subida correctamente.');
     } catch {
       window.alert('No se pudo conectar con el servidor.');
+    } finally {
+      setSubiendoCapturaId(null);
+      setOperacionSolicitudId(null);
     }
   };
 
@@ -413,10 +421,23 @@ const SolicitudesTransparenciaTI = () => {
                 <div className="relative">
                   <button
                     onClick={(e) => { e.stopPropagation(); setDropdownAbierto(dropdownAbierto === sol.id ? null : sol.id); }}
-                    className="px-3 py-1.5 text-[10px] font-bold border-2 border-gray-400 text-gray-600 rounded-lg transition-all duration-200 hover:bg-gray-100 active:scale-95 flex items-center gap-1"
+                    disabled={subiendoCapturaId === sol.id}
+                    className={`px-3 py-1.5 text-[10px] font-bold border-2 rounded-lg transition-all duration-200 flex items-center gap-1 ${subiendoCapturaId === sol.id ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-gray-400 text-gray-600 hover:bg-gray-100 active:scale-95'}`}
                   >
-                    Operaciones
-                    <span className="text-[8px]">{dropdownAbierto === sol.id ? '▲' : '▼'}</span>
+                    {subiendoCapturaId === sol.id ? (
+                      <>
+                        <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        Operaciones
+                        <span className="text-[8px]">{dropdownAbierto === sol.id ? '▲' : '▼'}</span>
+                      </>
+                    )}
                   </button>
                   {dropdownAbierto === sol.id && (
                     <div className="absolute left-0 bottom-full mb-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[200px]">

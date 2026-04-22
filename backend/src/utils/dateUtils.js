@@ -4,7 +4,7 @@
  */
 const formatFechaDocumento = (date) => {
   if (!(date instanceof Date) || isNaN(date)) return '—';
-  
+
   const day = String(date.getDate()).padStart(2, '0');
   const monthNames = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -12,7 +12,7 @@ const formatFechaDocumento = (date) => {
   ];
   const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
-  
+
   return `${day} de ${month} de ${year}`;
 };
 

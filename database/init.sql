@@ -111,8 +111,9 @@ CREATE TABLE IF NOT EXISTS Notificacion (
     IdNotificacion INT AUTO_INCREMENT PRIMARY KEY,
     nombreNotificacion VARCHAR(255) NOT NULL,
     descripcion TEXT,
-    IdRemitente INT NOT NULL,
+    IdRemitente INT,
     IdDestinatario INT NOT NULL,
+    leida BOOLEAN DEFAULT FALSE,
     fechaEnvio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (IdRemitente) REFERENCES Usuario(IdUsuario),
     FOREIGN KEY (IdDestinatario) REFERENCES Usuario(IdUsuario)
@@ -124,14 +125,20 @@ CREATE TABLE IF NOT EXISTS Notificacion (
 
 -- Usuarios de cada rol (Contraseña: password123 para todos, ya hasheada)
 INSERT INTO Usuario (nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupacion, puesto, ocupacion, correo, contrasena, rol) VALUES 
-('Norma Hilda', 'Jiménez', 'Martínez', 'M.A.P.', 'Contralora General', 'Contralora', 'normajimenez@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Contralora'),
+/*('Norma Hilda', 'Jiménez', 'Martínez', 'M.A.P.', 'Contralora General', 'Contralora', 'normajimenez@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Contralora'),
 ('David', 'Medrano', 'Mendoza', 'Ing.', 'Unidad de Informática', 'Ingeniero', 'dmedrano@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'TI'),
 ('Luis David', 'Hoz', 'Morales', 'Lic.', 'Coordinación Administrativa', 'Administrativo', 'lhoz@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
 ('María del Carmen', 'Peña', 'Cabrera', 'C.P.', 'Directora de Auditoría', 'Contadora', 'capena@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
 ('José Alberto', 'Aguilar', 'Segura', 'Lic.', 'Director de Control y Evaluación', 'Evaluador', 'alaguilar@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
 ('José Ángel Santos', 'Juárez', 'Pérez', 'Lic.', 'Director de Responsabilidades Administrativas y Situación Patrimonial', 'Abogado', 'drasp@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
 ('Rocio', 'Ladron de Guevara', 'López', 'Lic.', 'Secretaria', 'Secretaria', 'secretaria@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Secretaria'),
-('Oscar Alberto', 'Gonzáles', 'Castelán', 'M.A.E.', 'Auditor Financiero y Administrativo', 'Contador', 'oscargonzalez@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Supervisor');
+('Oscar Alberto', 'Gonzáles', 'Castelán', 'M.A.E.', 'Auditor Financiero y Administrativo', 'Contador', 'oscargonzalez@uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Supervisor'), */
+('Nuevo', 'TI', 'Test', 'Ing.', 'Soporte Técnico', 'Ingeniero', 'erickutrera47@gmail.com', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'TI'),
+('Nueva', 'Contralora', 'Test', 'M.A.P.', 'Contraloría Adjunta', 'Contralora', 'erickutrera47@hotmail.com', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Contralora'),
+('Nuevo', 'Responsable', 'Test', 'Lic.', 'Coordinador de Área', 'Administrativo', 'zS21013841@estudiantes.uv.mx', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Responsable'),
+('Nueva', 'Secretaria', 'Test', 'Lic.', 'Secretaría Técnica', 'Secretaria', 'rickparker4747@gmail.com', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Secretaria'),
+('Nuevo', 'Supervisor', 'Test', 'M.A.', 'Supervisor de Auditoría', 'Auditor', 'trollolloxdlol@gmail.com', '$2a$10$bgmQKSjZfVF.FNuCTCV2b.suU.A0IXWQ/0iWOlGbu1xu0KsYJ4TK2', 'Supervisor');
+
 
 -- Datos específicos para los usuarios Responsables
 INSERT INTO UsuarioResponsable (IdUsuario)

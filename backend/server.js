@@ -5,6 +5,7 @@ const cors = require('cors');
 const authRoutes = require('./src/routes/auth.routes');
 const solicitudesRoutes = require('./src/routes/solicitudes.routes');
 const usuarioRoutes = require('./src/routes/usuario.routes');
+const notificacionesRoutes = require('./src/routes/notificaciones.routes');
 const errorHandler = require('./src/middlewares/errorHandler');
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/solicitudes', solicitudesRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 // Ruta de health-check
 app.get('/api/health', (req, res) => {

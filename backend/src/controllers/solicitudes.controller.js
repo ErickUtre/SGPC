@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const AdmZip = require('adm-zip');
 const { generarOficioPDF } = require('../utils/oficioGenerator');
+const { enviarNotificacion } = require('../utils/notificationService');
 const path = require('path');
 
 
@@ -281,6 +282,17 @@ const crearSolicitud = async (req, res, next) => {
 
     const fechaBase = nuevaSolicitud.fechaRegistro;
 
+    // 4. Enviar Notificaciones a Contralora
+    const [contraloras] = await conn.query("SELECT IdUsuario FROM Usuario WHERE rol = 'Contralora'");
+    for (const c of contraloras) {
+      await enviarNotificacion(
+        c.IdUsuario,
+        'Nueva Solicitud Registrada',
+        `Se ha registrado una nueva solicitud: ${nuevaSolicitud.nombreSolicitud}.`,
+        null // Remitente: Sistema
+      );
+    }
+
     return res.status(201).json({
       ok: true,
       mensaje: 'Solicitud registrada exitosamente.',
@@ -409,6 +421,19 @@ const subirCapturaEntrega = async (req, res, next) => {
     }
 
     await conn.commit();
+
+    // 4. Enviar Notificación a Secretaria
+    const [sol] = await pool.query('SELECT nombreSolicitud FROM Solicitud WHERE IdSolicitud = ?', [idSolicitud]);
+    const [secretarias] = await pool.query("SELECT IdUsuario FROM Usuario WHERE rol = 'Secretaria'");
+    for (const s of secretarias) {
+      await enviarNotificacion(
+        s.IdUsuario,
+        'Solicitud Lista para Archivar',
+        `La solicitud ${sol[0]?.nombreSolicitud || idSolicitud} está lista para archivar.`,
+        null
+      );
+    }
+
     return res.status(200).json({ ok: true, mensaje: 'Captura de entrega registrada correctamente.' });
   } catch (error) {
     await conn.rollback();
@@ -533,7 +558,7 @@ const turnarSolicitud = async (req, res, next) => {
     }
 
     // 2. Obtener datos de la solicitud para el oficio
-    const [solRows] = await conn.query('SELECT folio, fechaRegistro, diasMaximos FROM Solicitud WHERE IdSolicitud = ?', [idSolicitud]);
+    const [solRows] = await conn.query('SELECT folio, fechaRegistro, diasMaximos, nombreSolicitud FROM Solicitud WHERE IdSolicitud = ?', [idSolicitud]);
     const solicitud = solRows[0];
 
     // 3. Generar oficio e insertar para cada responsable
@@ -570,6 +595,28 @@ const turnarSolicitud = async (req, res, next) => {
     }
 
     await conn.commit();
+
+    // 4. Enviar Notificaciones
+    // A Responsables asignados
+    for (const idResp of idsResponsables) {
+      await enviarNotificacion(
+        idResp,
+        'Nueva Solicitud Asignada',
+        `Se te ha turnado la solicitud: ${solicitud.nombreSolicitud} (Folio: ${solicitud.folio}).`,
+        null
+      );
+    }
+    // A Supervisor y Secretaria
+    const [otrosUsuarios] = await conn.query("SELECT IdUsuario FROM Usuario WHERE rol IN ('Supervisor', 'Secretaria')");
+    for (const u of otrosUsuarios) {
+      await enviarNotificacion(
+        u.IdUsuario,
+        'Solicitud Turnada',
+        `La solicitud ${solicitud.nombreSolicitud} ha sido turnada a sus responsables.`,
+        null
+      );
+    }
+
     return res.status(200).json({ ok: true, mensaje: 'Solicitud turnada y oficios generados correctamente.' });
 
   } catch (error) {
@@ -637,6 +684,24 @@ const subirEvidenciaResponsable = async (req, res, next) => {
     }
 
     await conn.commit();
+
+    // 4. Revisar si todas las evidencias fueron cargadas para notificar a Contralora
+    const [turnados] = await pool.query('SELECT COUNT(*) as total FROM TurnadoSolicitud WHERE IdSolicitud = ?', [idSolicitud]);
+    const [evid] = await pool.query('SELECT COUNT(*) as subidas FROM EvidenciaResponsable WHERE IdRespuesta = ?', [idRespuesta]);
+    
+    if (turnados[0].total > 0 && turnados[0].total === evid[0].subidas) {
+      const [sol] = await pool.query('SELECT nombreSolicitud FROM Solicitud WHERE IdSolicitud = ?', [idSolicitud]);
+      const [contraloras] = await pool.query("SELECT IdUsuario FROM Usuario WHERE rol = 'Contralora'");
+      for (const c of contraloras) {
+        await enviarNotificacion(
+          c.IdUsuario,
+          'Solicitud Pendiente de Validación',
+          `Todos los responsables han subido su evidencia para la solicitud: ${sol[0]?.nombreSolicitud || idSolicitud}.`,
+          null
+        );
+      }
+    }
+
     return res.status(200).json({ ok: true, mensaje: 'Evidencia registrada correctamente.' });
   } catch (error) {
     await conn.rollback();
@@ -996,6 +1061,17 @@ const resolverSolicitud = async (req, res, next) => {
     }
 
     await pool.query('UPDATE Solicitud SET resuelto = TRUE, fechaValidacion = CURRENT_TIMESTAMP WHERE IdSolicitud = ?', [idSolicitud]);
+
+    // 4. Enviar Notificación al TI
+    const [solRows] = await pool.query('SELECT IdUsuarioTI, nombreSolicitud FROM Solicitud WHERE IdSolicitud = ?', [idSolicitud]);
+    if (solRows.length > 0) {
+      await enviarNotificacion(
+        solRows[0].IdUsuarioTI,
+        'Solicitud Validada',
+        `La solicitud ${solRows[0].nombreSolicitud} ha sido validada por la Contralora.`,
+        null
+      );
+    }
 
     return res.status(200).json({ ok: true, mensaje: 'Solicitud resuelta correctamente.' });
   } catch (error) {

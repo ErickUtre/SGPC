@@ -13,6 +13,7 @@ const SolicitudesTransparenciaContralora = () => {
   const [modalProrroga, setModalProrroga] = useState(false);
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
   const [solicitudACancelar, setSolicitudACancelar] = useState(null);
+  const [validando, setValidando] = useState(false);
 
   const [responsables, setResponsables] = useState([]);
   const [seleccionados, setSeleccionados] = useState([]);
@@ -152,6 +153,7 @@ const SolicitudesTransparenciaContralora = () => {
   };
 
   const confirmarValidacion = async () => {
+    setValidando(true);
     try {
       const token = sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/solicitudes/${solicitudSeleccionada.idOriginal}/resolver`, {
@@ -170,6 +172,8 @@ const SolicitudesTransparenciaContralora = () => {
       }
     } catch (error) {
       window.alert('Error al conectar con el servidor.');
+    } finally {
+      setValidando(false);
     }
   };
 
@@ -604,15 +608,27 @@ const SolicitudesTransparenciaContralora = () => {
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setModalValidar(false)}
-                  className="px-8 py-3 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
+                  disabled={validando}
+                  className={`px-8 py-3 text-xs font-bold transition-colors ${validando ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmarValidacion}
-                  className="bg-[#1e4b8f] text-white px-10 py-3 rounded-xl font-bold text-xs shadow-md hover:bg-[#153566] transition-all active:scale-95"
+                  disabled={validando}
+                  className={`flex items-center gap-2 text-white px-10 py-3 rounded-xl font-bold text-xs shadow-md transition-all ${validando ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#1e4b8f] hover:bg-[#153566] active:scale-95'}`}
                 >
-                  Confirmar
+                  {validando ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Validando...
+                    </>
+                  ) : (
+                    'Confirmar'
+                  )}
                 </button>
               </div>
             </div>
