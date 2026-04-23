@@ -29,7 +29,7 @@ const enviarNotificacion = async (idDestinatario, titulo, descripcion, idRemiten
 
     // 2. Obtener el correo del destinatario
     const [rows] = await pool.query('SELECT correo, nombre FROM Usuario WHERE IdUsuario = ?', [idDestinatario]);
-    
+
     if (rows.length === 0) {
       console.error(`No se encontró el usuario destinatario con ID: ${idDestinatario}`);
       return;
@@ -50,7 +50,6 @@ const enviarNotificacion = async (idDestinatario, titulo, descripcion, idRemiten
       subject: titulo,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-          <h2 style="color: #1e4b8f;">Hola, ${nombre}</h2>
           <p style="font-size: 16px; color: #333;">Tienes una nueva notificación en el <strong>Sistema de Gestión de Procesos de la Contraloría</strong>:</p>
           
           <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #1e4b8f; margin: 20px 0;">

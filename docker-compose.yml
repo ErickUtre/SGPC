@@ -29,6 +29,11 @@ services:
       JWT_SECRET: sgpc_contraloria_uv_secreto_2026
       JWT_EXPIRES_IN: 8h
       PORT: 3001
+      # Configuración de Servidor de Correos (SMTP)
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: sgpcontraloria@gmail.com
+      SMTP_PASS: asvh eifx ndsa mnmu
     volumes:
       - ./backend:/app
       - /app/node_modules

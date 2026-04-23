@@ -8,6 +8,17 @@ const Header = () => {
   const location = useLocation();
   const [notifAbierto, setNotifAbierto] = useState(false);
   const [notificaciones, setNotificaciones] = useState([]);
+  
+  const userRole = sessionStorage.getItem('userRole');
+  const [perfilAbierto, setPerfilAbierto] = useState(false);
+  const [perfilCorreo, setPerfilCorreo] = useState('');
+  const [perfilPassword, setPerfilPassword] = useState('');
+  
+  // Edit states for Profile Modal
+  const [editandoCorreo, setEditandoCorreo] = useState(false);
+  const [editandoPassword, setEditandoPassword] = useState(false);
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [cargandoPerfil, setCargandoPerfil] = useState(false);
 
   const cargarNotificaciones = async () => {
     try {
@@ -17,6 +28,56 @@ const Header = () => {
       }
     } catch (error) {
       console.error('Error cargando notificaciones:', error);
+    }
+  };
+
+  const abrirPerfil = async () => {
+    setPerfilAbierto(true);
+    setPerfilPassword('');
+    setEditandoCorreo(false);
+    setEditandoPassword(false);
+    setMostrarPassword(false);
+    setCargandoPerfil(true);
+    try {
+      const token = sessionStorage.getItem('token');
+      // Importante usar ruta absoluta y el prefijo de la API local
+      const res = await fetch(`http://localhost:3001/api/usuarios/perfil`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.ok) setPerfilCorreo(data.perfil.correo);
+    } catch (e) {
+      console.error('Error al cargar perfil', e);
+    } finally {
+      setCargandoPerfil(false);
+    }
+  };
+
+  const guardarPerfil = async () => {
+    try {
+      setCargandoPerfil(true);
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(`http://localhost:3001/api/usuarios/perfil`, {
+        method: 'PUT',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ correo: perfilCorreo, contrasena: perfilPassword })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        window.alert('Actualizado correctamente. Usa estos datos para tu próximo inicio de sesión.');
+        setEditandoCorreo(false);
+        setEditandoPassword(false);
+        setPerfilPassword('');
+      } else {
+        window.alert(data.mensaje || 'Error al guardar el perfil');
+      }
+    } catch (e) {
+      window.alert('Ocurrió un error de red');
+    } finally {
+      setCargandoPerfil(false);
     }
   };
 
@@ -188,6 +249,34 @@ const Header = () => {
           )}
         </div>
 
+        {userRole === 'Supervisor' && (
+          <button
+            onClick={() => navigate('/usuarios')}
+            className={`flex items-center gap-1.5 text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
+              location.pathname.startsWith('/usuarios') 
+                ? 'bg-gray-100 text-[#1e4b8f]' 
+                : 'text-gray-600 hover:bg-gray-100 hover:text-[#1e4b8f]'
+            }`}
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <span className="hidden sm:inline">Gestión de Usuarios</span>
+          </button>
+        )}
+
+        <div className="relative">
+          <button
+            onClick={abrirPerfil}
+            className={`flex items-center gap-1.5 text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-lg transition-all relative ${
+              perfilAbierto 
+                ? 'bg-gray-100 text-[#1e4b8f]' 
+                : 'text-gray-600 hover:bg-gray-100 hover:text-[#1e4b8f]'
+            }`}
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span className="hidden sm:inline">Perfil</span>
+          </button>
+        </div>
+
         <button
           onClick={cerrarSesion}
           className="text-xs text-gray-400 hover:text-red-500 transition-colors uppercase tracking-wider font-bold whitespace-nowrap pl-2 border-l border-gray-200"
@@ -195,6 +284,95 @@ const Header = () => {
           Cerrar sesión
         </button>
       </div>
+
+      {perfilAbierto && (
+        <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-200">
+            <div className="bg-[#1e4b8f] p-5 text-white flex items-center justify-between">
+               <h3 className="font-bold tracking-widest text-sm flex items-center gap-2">
+                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                 Mi Perfil
+               </h3>
+               <button onClick={() => setPerfilAbierto(false)} className="text-blue-200 hover:text-white transition-colors">✕</button>
+            </div>
+            <div className="p-6">
+               {cargandoPerfil ? (
+                 <div className="flex justify-center py-6"><svg className="animate-spin w-8 h-8 text-[#1e4b8f]" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></div>
+               ) : (
+                 <div className="flex flex-col gap-5">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Correo Electrónico</label>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <input 
+                          type="email" 
+                          value={perfilCorreo} 
+                          onChange={(e) => setPerfilCorreo(e.target.value)} 
+                          disabled={!editandoCorreo}
+                          className={`flex-1 border rounded-lg p-3 text-sm outline-none transition-colors ${editandoCorreo ? 'border-[#1e4b8f] bg-white' : 'border-transparent bg-gray-50 text-gray-700'}`} 
+                        />
+                        {editandoCorreo ? (
+                          <div className="flex gap-1">
+                            <button onClick={guardarPerfil} disabled={cargandoPerfil} className="p-2.5 bg-[#009642] text-white rounded-lg hover:bg-green-700 transition-colors" title="Guardar">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            </button>
+                            <button onClick={() => { setEditandoCorreo(false); abrirPerfil(); }} disabled={cargandoPerfil} className="p-2.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="Cancelar">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setEditandoCorreo(true)} className="p-2.5 bg-blue-50 text-[#1e4b8f] rounded-lg hover:bg-blue-100 transition-colors" title="Editar Correo">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Contraseña</label>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <div className="relative flex-1">
+                          <input 
+                            type={mostrarPassword ? "text" : "password"} 
+                            value={editandoPassword ? perfilPassword : "••••••••"} 
+                            onChange={(e) => setPerfilPassword(e.target.value)} 
+                            placeholder={editandoPassword ? "Nueva contraseña..." : ""}
+                            disabled={!editandoPassword}
+                            className={`w-full border rounded-lg p-3 pr-10 text-sm outline-none transition-colors tracking-widest ${editandoPassword ? 'border-[#1e4b8f] bg-white' : 'border-transparent bg-gray-50 text-gray-700'}`} 
+                          />
+                          <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            {mostrarPassword ? (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            )}
+                          </button>
+                        </div>
+                        {editandoPassword ? (
+                          <div className="flex gap-1 shrink-0">
+                            <button onClick={guardarPerfil} disabled={cargandoPerfil || perfilPassword === ''} className="p-2.5 bg-[#009642] text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50" title="Guardar Contraseña">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            </button>
+                            <button onClick={() => { setEditandoPassword(false); setPerfilPassword(''); }} disabled={cargandoPerfil} className="p-2.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="Cancelar">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setEditandoPassword(true)} className="p-2.5 bg-blue-50 text-[#1e4b8f] rounded-lg hover:bg-blue-100 transition-colors shrink-0" title="Editar Contraseña">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                 </div>
+               )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

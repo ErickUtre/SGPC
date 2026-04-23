@@ -12,6 +12,7 @@ import SolicitudesTransparenciaContralora from './pages/SolicitudesTransparencia
 import SolicitudesTransparenciaResponsable from './pages/SolicitudesTransparencia/TransparenciaResponsable';
 import SolicitudesTransparenciaSecretaria from './pages/SolicitudesTransparencia/TransparenciaSecretaria';
 import SolicitudesTransparenciaSupervisor from './pages/SolicitudesTransparencia/TransparenciaSupervisor';
+import Usuarios from './pages/Usuarios';
 
 const decodeJwtPayload = (token) => {
   try {
@@ -117,6 +118,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['Supervisor']}>
                   <SolicitudesTransparenciaSupervisor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/usuarios"
+              element={
+                <ProtectedRoute allowedRoles={['Supervisor']}>
+                  <Usuarios />
                 </ProtectedRoute>
               }
             />
