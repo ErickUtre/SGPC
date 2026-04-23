@@ -1,6 +1,10 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 
+const ROLES_VALIDOS = ['Contralora', 'TI', 'Secretaria', 'Responsable', 'Supervisor'];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+
 /**
  * Obtiene todos los usuarios con el rol 'Responsable'.
  * Se ordenan por IdUsuario para mantener la consistencia solicitada.
@@ -33,17 +37,41 @@ const obtenerTodosUsuarios = async (req, res, next) => {
 
 const crearUsuario = async (req, res, next) => {
   const { nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupacion, puesto, ocupacion, correo, rol, contrasena } = req.body;
-  if (!correo || !contrasena || !nombre || !rol) {
-    return res.status(400).json({ ok: false, mensaje: 'Faltan campos obligatorios' });
+
+  // Validaciones estrictas
+  if (!nombre || !correo || !contrasena || !rol) {
+    return res.status(400).json({ ok: false, mensaje: 'Nombre, correo, contraseña y rol son obligatorios.' });
   }
-  
+  if (!EMAIL_REGEX.test(correo)) {
+    return res.status(400).json({ ok: false, mensaje: 'El formato del correo electrónico no es válido.' });
+  }
+  if (contrasena.length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ ok: false, mensaje: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.` });
+  }
+  if (!ROLES_VALIDOS.includes(rol)) {
+    return res.status(400).json({ ok: false, mensaje: `Rol inválido. Valores permitidos: ${ROLES_VALIDOS.join(', ')}` });
+  }
+  if (nombre.length > 30 || 
+      (apellidoPaterno && apellidoPaterno.length > 30) || 
+      (apellidoMaterno && apellidoMaterno.length > 30) ||
+      (abreviacionOcupacion && abreviacionOcupacion.length > 10) ||
+      (ocupacion && ocupacion.length > 30) ||
+      (puesto && puesto.length > 50) ||
+      (correo && correo.length > 100) || 
+      (contrasena && contrasena.length > 50)) {
+    return res.status(400).json({ 
+      ok: false, 
+      mensaje: 'Uno o más campos exceden la longitud máxima permitida (Nombres/Apellidos/Ocupación: 30, Abrev: 10, Puesto: 50, Correo: 100, Contraseña: 50).' 
+    });
+  }
+
   try {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(contrasena, salt);
 
     const [result] = await pool.query(
       'INSERT INTO Usuario (nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupacion, puesto, ocupacion, correo, rol, contrasena) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupacion || '', puesto || '', ocupacion || '', correo, rol, hash]
+      [nombre, apellidoPaterno || '', apellidoMaterno || '', abreviacionOcupacion || '', puesto || '', ocupacion || '', correo, rol, hash]
     );
 
     const newId = result.insertId;
@@ -64,10 +92,33 @@ const crearUsuario = async (req, res, next) => {
 const actualizarUsuario = async (req, res, next) => {
   const { id } = req.params;
   const { nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupacion, puesto, ocupacion, correo, rol } = req.body;
+
+  if (!nombre || !correo || !rol) {
+    return res.status(400).json({ ok: false, mensaje: 'Nombre, correo y rol son obligatorios.' });
+  }
+  if (!EMAIL_REGEX.test(correo)) {
+    return res.status(400).json({ ok: false, mensaje: 'El formato del correo electrónico no es válido.' });
+  }
+  if (!ROLES_VALIDOS.includes(rol)) {
+    return res.status(400).json({ ok: false, mensaje: `Rol inválido. Valores permitidos: ${ROLES_VALIDOS.join(', ')}` });
+  }
+  if (nombre.length > 30 || 
+      (apellidoPaterno && apellidoPaterno.length > 30) || 
+      (apellidoMaterno && apellidoMaterno.length > 30) ||
+      (abreviacionOcupacion && abreviacionOcupacion.length > 10) ||
+      (ocupacion && ocupacion.length > 30) ||
+      (puesto && puesto.length > 50) ||
+      (correo && correo.length > 100)) {
+    return res.status(400).json({ 
+      ok: false, 
+      mensaje: 'Uno o más campos exceden la longitud máxima permitida (Nombres/Apellidos/Ocupación: 30, Abrev: 10, Puesto: 50, Correo: 100).' 
+    });
+  }
+
   try {
     const [result] = await pool.query(
       'UPDATE Usuario SET nombre = ?, apellidoPaterno = ?, apellidoMaterno = ?, abreviacionOcupacion = ?, puesto = ?, ocupacion = ?, correo = ?, rol = ? WHERE IdUsuario = ?',
-      [nombre, apellidoPaterno, apellidoMaterno, abreviacionOcupacion, puesto, ocupacion, correo, rol, id]
+      [nombre, apellidoPaterno || '', apellidoMaterno || '', abreviacionOcupacion || '', puesto || '', ocupacion || '', correo, rol, id]
     );
 
     if (result.affectedRows === 0) {
@@ -128,8 +179,22 @@ const actualizarMiPerfil = async (req, res, next) => {
     const id = req.usuario.IdUsuario;
     const { correo, contrasena } = req.body;
 
-    if (!correo) {
+    if (!correo || correo.trim() === '') {
       return res.status(400).json({ ok: false, mensaje: 'El correo es obligatorio.' });
+    }
+    if (correo.length > 100) {
+      return res.status(400).json({ ok: false, mensaje: 'El correo no puede exceder los 100 caracteres.' });
+    }
+    if (!EMAIL_REGEX.test(correo)) {
+      return res.status(400).json({ ok: false, mensaje: 'El formato del correo electrónico no es válido.' });
+    }
+    if (contrasena && contrasena.trim() !== '') {
+      if (contrasena.length < MIN_PASSWORD_LENGTH) {
+        return res.status(400).json({ ok: false, mensaje: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.` });
+      }
+      if (contrasena.length > 50) {
+        return res.status(400).json({ ok: false, mensaje: 'La contraseña no puede exceder los 50 caracteres.' });
+      }
     }
 
     let query = 'UPDATE Usuario SET correo = ? WHERE IdUsuario = ?';

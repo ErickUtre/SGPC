@@ -309,7 +309,7 @@ const Header = () => {
                           type="email" 
                           value={perfilCorreo} 
                           onChange={(e) => setPerfilCorreo(e.target.value)} 
-                          disabled={!editandoCorreo}
+                          maxLength={100}
                           className={`flex-1 border rounded-lg p-3 text-sm outline-none transition-colors ${editandoCorreo ? 'border-[#1e4b8f] bg-white' : 'border-transparent bg-gray-50 text-gray-700'}`} 
                         />
                         {editandoCorreo ? (
@@ -340,7 +340,7 @@ const Header = () => {
                             value={editandoPassword ? perfilPassword : "••••••••"} 
                             onChange={(e) => setPerfilPassword(e.target.value)} 
                             placeholder={editandoPassword ? "Nueva contraseña..." : ""}
-                            disabled={!editandoPassword}
+                            maxLength={50}
                             className={`w-full border rounded-lg p-3 pr-10 text-sm outline-none transition-colors tracking-widest ${editandoPassword ? 'border-[#1e4b8f] bg-white' : 'border-transparent bg-gray-50 text-gray-700'}`} 
                           />
                           <button type="button" onClick={() => setMostrarPassword(!mostrarPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">

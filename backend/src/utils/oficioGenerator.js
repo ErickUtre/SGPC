@@ -47,7 +47,9 @@ const generarOficioPDF = async (data) => {
     const fechaMaximaStr = fMax ? formatFechaDocumento(fMax) : '—';
 
     const reportData = {
-      folio: data.solicitudFolio,
+      folioOficio: data.folioOficio,
+      folio: data.solicitudFolio, // El folio de la solicitud (UV-TR-...)
+      abreviacionOcupacion: (data.responsableAbreviacion || '').replace(/\.+$/, ''), // Nueva etiqueta solicitada
       abreviacion: (data.responsableAbreviacion || '').replace(/\.+$/, ''),
       nombre: data.responsableNombre || '',
       apellidoPaterno: data.responsableApellidoPaterno || '',

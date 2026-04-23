@@ -14,15 +14,27 @@ const pool = mysql.createPool({
   charset: 'utf8mb4',
 });
 
-// Verificar conexión al arrancar
-pool.getConnection()
-  .then(conn => {
-    // Conexión exitosa
+// Verificar conexión al arrancar con reintentos automáticos
+const MAX_RETRIES = 10;
+const RETRY_DELAY_MS = 3000;
+
+async function connectWithRetry(attempt = 1) {
+  try {
+    const conn = await pool.getConnection();
+    console.log(`✅ Conectado a MySQL (intento ${attempt})`);
     conn.release();
-  })
-  .catch(err => {
-    console.error('❌ Error al conectar con MySQL:', err.message);
-    console.error('   Verifica que el contenedor Docker esté corriendo: docker compose up -d');
-  });
+  } catch (err) {
+    console.error(`⏳ Intento ${attempt}/${MAX_RETRIES} - MySQL no disponible: ${err.message}`);
+    if (attempt < MAX_RETRIES) {
+      await new Promise(res => setTimeout(res, RETRY_DELAY_MS));
+      return connectWithRetry(attempt + 1);
+    } else {
+      console.error('❌ No se pudo conectar con MySQL después de múltiples intentos.');
+      console.error('   Verifica que el contenedor Docker esté corriendo: docker compose up -d');
+    }
+  }
+}
+
+connectWithRetry();
 
 module.exports = pool;

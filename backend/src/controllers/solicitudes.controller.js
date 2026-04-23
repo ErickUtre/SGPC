@@ -13,7 +13,7 @@ const formatFecha = (dateStr) => {
   // Forzamos interpretación como UTC agregando 'Z'
   const d = new Date(dateStr + ' Z');
   if (isNaN(d.getTime())) return '—';
-  
+
   // Restar 6 horas para CST (UTC-6)
   const cst = new Date(d.getTime() - (6 * 60 * 60 * 1000));
   const pad = (n) => String(n).padStart(2, '0');
@@ -235,6 +235,9 @@ const crearSolicitud = async (req, res, next) => {
     if (!nombre || nombre.trim() === '') {
       return res.status(400).json({ ok: false, mensaje: 'El nombre de la solicitud es obligatorio.' });
     }
+    if (nombre.trim().length > 100) {
+      return res.status(400).json({ ok: false, mensaje: 'El nombre de la solicitud no puede exceder 100 caracteres.' });
+    }
     if (!archivo) {
       return res.status(400).json({ ok: false, mensaje: 'Debe adjuntar un archivo (PDF o DOCX).' });
     }
@@ -329,6 +332,9 @@ const actualizarNombreSolicitud = async (req, res, next) => {
     }
     if (!nombre || nombre.trim() === '') {
       return res.status(400).json({ ok: false, mensaje: 'El nombre es obligatorio.' });
+    }
+    if (nombre.trim().length > 100) {
+      return res.status(400).json({ ok: false, mensaje: 'El nombre no puede exceder 100 caracteres.' });
     }
 
     const [result] = await pool.query(
@@ -456,7 +462,7 @@ const eliminarSolicitud = async (req, res, next) => {
 
     // 1. Recolectar todos los IdArchivo asociados para limpiar la tabla Archivo
     const [sol] = await conn.query('SELECT IdArchivoPNT, IdCapturaEntrega FROM Solicitud WHERE IdSolicitud = ?', [idSolicitud]);
-    
+
     if (sol.length === 0) {
       await conn.rollback();
       return res.status(404).json({ ok: false, mensaje: 'Solicitud no encontrada.' });
@@ -513,12 +519,12 @@ const turnarSolicitud = async (req, res, next) => {
   const conn = await pool.getConnection();
   try {
     const idSolicitud = Number(req.params.id);
-    const { idsResponsables } = req.body;
+    const { asignaciones } = req.body;
 
     if (!Number.isInteger(idSolicitud) || idSolicitud <= 0) {
       return res.status(400).json({ ok: false, mensaje: 'Id de solicitud inválido.' });
     }
-    if (!Array.isArray(idsResponsables) || idsResponsables.length === 0) {
+    if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
       return res.status(400).json({ ok: false, mensaje: 'Debe seleccionar al menos un responsable.' });
     }
 
@@ -530,11 +536,11 @@ const turnarSolicitud = async (req, res, next) => {
        FROM EvidenciaResponsable er
        INNER JOIN Respuesta r ON er.IdRespuesta = r.IdRespuesta
        WHERE r.IdSolicitud = ?`,
-       [idSolicitud]
+      [idSolicitud]
     );
 
     if (evidencias.length > 0) {
-      const idsArchivos = evidencias.map(e => e.IdArchivoRespuesta);
+      const idsArchivos = evidencias.map(e => e.IdArchivoRespuesta).filter(id => id !== null);
       // Borrar relaciones de evidencia
       await conn.query(
         `DELETE er FROM EvidenciaResponsable er
@@ -545,13 +551,15 @@ const turnarSolicitud = async (req, res, next) => {
       // Borrar respuestas
       await conn.query('DELETE FROM Respuesta WHERE IdSolicitud = ?', [idSolicitud]);
       // Borrar contenido binario
-      await conn.query('DELETE FROM Archivo WHERE IdArchivo IN (?)', [idsArchivos]);
+      if (idsArchivos.length > 0) {
+        await conn.query('DELETE FROM Archivo WHERE IdArchivo IN (?)', [idsArchivos]);
+      }
     }
 
     // 1. Limpiar turnados anteriores (y sus archivos de oficio)
     const [oficiosViejos] = await conn.query('SELECT IdArchivoOficio FROM TurnadoSolicitud WHERE IdSolicitud = ?', [idSolicitud]);
     const idsViejos = oficiosViejos.map(o => o.IdArchivoOficio).filter(id => id !== null);
-    
+
     await conn.query('DELETE FROM TurnadoSolicitud WHERE IdSolicitud = ?', [idSolicitud]);
     if (idsViejos.length > 0) {
       await conn.query('DELETE FROM Archivo WHERE IdArchivo IN (?)', [idsViejos]);
@@ -562,12 +570,14 @@ const turnarSolicitud = async (req, res, next) => {
     const solicitud = solRows[0];
 
     // 3. Generar oficio e insertar para cada responsable
-    for (const idResp of idsResponsables) {
-      const [userRows] = await conn.query('SELECT * FROM Usuario WHERE IdUsuario = ?', [idResp]);
+    for (const asignacion of asignaciones) {
+      const { idResponsable, folioOficio } = asignacion;
+      const [userRows] = await conn.query('SELECT * FROM Usuario WHERE IdUsuario = ?', [idResponsable]);
       const user = userRows[0];
 
-      // Generar el PDF
+      // Generar el PDF pasando el folioOficio proporcionado por la Contralora
       const pdfBuffer = await generarOficioPDF({
+        folioOficio: folioOficio,
         solicitudFolio: solicitud.folio,
         solicitudFechaRegistro: solicitud.fechaRegistro,
         solicitudDiasMaximos: solicitud.diasMaximos,
@@ -580,17 +590,17 @@ const turnarSolicitud = async (req, res, next) => {
       });
 
       // Guardar PDF en la tabla Archivo
-      const nombreArchivoOficio = `Oficio_${solicitud.folio}_${user.apellidoPaterno}.pdf`;
+      const nombreArchivoOficio = `Oficio_${folioOficio.replace(/\//g, '_')}_${user.apellidoPaterno}.pdf`;
       const [archivoResult] = await conn.query(
         'INSERT INTO Archivo (nombreArchivo, contenido) VALUES (?, ?)',
         [nombreArchivoOficio, pdfBuffer]
       );
       const idArchivoOficio = archivoResult.insertId;
 
-      // Crear el registro de turnado vinculado al oficio
+      // 4. Registrar el turnado con su respectivo folioOficio
       await conn.query(
-        'INSERT INTO TurnadoSolicitud (IdSolicitud, IdUsuarioResponsable, IdArchivoOficio) VALUES (?, ?, ?)',
-        [idSolicitud, idResp, idArchivoOficio]
+        'INSERT INTO TurnadoSolicitud (IdSolicitud, IdUsuarioResponsable, IdArchivoOficio, folioOficio) VALUES (?, ?, ?, ?)',
+        [idSolicitud, idResponsable, idArchivoOficio, folioOficio]
       );
     }
 
@@ -598,9 +608,9 @@ const turnarSolicitud = async (req, res, next) => {
 
     // 4. Enviar Notificaciones
     // A Responsables asignados
-    for (const idResp of idsResponsables) {
+    for (const asignacion of asignaciones) {
       await enviarNotificacion(
-        idResp,
+        asignacion.idResponsable,
         'Nueva Solicitud Asignada',
         `Se te ha turnado la solicitud: ${solicitud.nombreSolicitud} (Folio: ${solicitud.folio}).`,
         null
@@ -644,13 +654,12 @@ const subirEvidenciaResponsable = async (req, res, next) => {
     if (!idUsuario) {
       return res.status(401).json({ ok: false, mensaje: 'No autenticado.' });
     }
-
     await conn.beginTransaction();
 
     // 1. Verificar si ya existe una Respuesta para esta solicitud
     let idRespuesta;
     const [respuestas] = await conn.query('SELECT IdRespuesta FROM Respuesta WHERE IdSolicitud = ?', [idSolicitud]);
-    
+
     if (respuestas.length === 0) {
       // Crear respuesta generica inicial si no existe
       const [insertResp] = await conn.query('INSERT INTO Respuesta (IdSolicitud, completa) VALUES (?, false)', [idSolicitud]);
@@ -688,7 +697,7 @@ const subirEvidenciaResponsable = async (req, res, next) => {
     // 4. Revisar si todas las evidencias fueron cargadas para notificar a Contralora
     const [turnados] = await pool.query('SELECT COUNT(*) as total FROM TurnadoSolicitud WHERE IdSolicitud = ?', [idSolicitud]);
     const [evid] = await pool.query('SELECT COUNT(*) as subidas FROM EvidenciaResponsable WHERE IdRespuesta = ?', [idRespuesta]);
-    
+
     if (turnados[0].total > 0 && turnados[0].total === evid[0].subidas) {
       const [sol] = await pool.query('SELECT nombreSolicitud FROM Solicitud WHERE IdSolicitud = ?', [idSolicitud]);
       const [contraloras] = await pool.query("SELECT IdUsuario FROM Usuario WHERE rol = 'Contralora'");
@@ -816,9 +825,10 @@ const solicitarProrroga = async (req, res, next) => {
     }
 
     // Insertar en la tabla de petición
+    const motivoLimpio = motivo ? motivo.substring(0, 500) : null;
     await pool.query(
       'INSERT INTO ProrrogaSolicitud (IdSolicitud, IdUsuarioResponsable, motivo) VALUES (?, ?, ?)',
-      [idSolicitud, idUsuario, motivo || null]
+      [idSolicitud, idUsuario, motivoLimpio]
     );
 
     return res.status(200).json({ ok: true, mensaje: 'Prórroga solicitada con éxito.' });
@@ -909,12 +919,11 @@ const obtenerTurnados = async (req, res, next) => {
     }
 
     const [rows] = await pool.query(
-      'SELECT IdUsuarioResponsable FROM TurnadoSolicitud WHERE IdSolicitud = ?',
+      'SELECT IdUsuarioResponsable, folioOficio FROM TurnadoSolicitud WHERE IdSolicitud = ?',
       [idSolicitud]
     );
 
-    const ids = rows.map(r => r.IdUsuarioResponsable);
-    return res.status(200).json({ ok: true, turnados: ids });
+    return res.status(200).json({ ok: true, turnados: rows });
   } catch (error) {
     next(error);
   }
@@ -933,7 +942,7 @@ const generarPaqueteZip = async (req, res, next) => {
     // 1. Obtener nombre de la solicitud
     const [solRows] = await pool.query(
       `SELECT nombreSolicitud, IdArchivoPNT, IdCapturaEntrega FROM Solicitud WHERE IdSolicitud = ?`,
-       [idSolicitud]
+      [idSolicitud]
     );
 
     if (solRows.length === 0) {
@@ -953,7 +962,7 @@ const generarPaqueteZip = async (req, res, next) => {
          INNER JOIN Archivo a ON er.IdArchivoRespuesta = a.IdArchivo
          INNER JOIN Usuario u ON er.IdUsuarioResponsable = u.IdUsuario
          WHERE r.IdSolicitud = ?`,
-         [idSolicitud]
+        [idSolicitud]
       );
 
       if (evidencias.length > 0) {
@@ -974,7 +983,7 @@ const generarPaqueteZip = async (req, res, next) => {
          LEFT JOIN Archivo aPNT ON s.IdArchivoPNT = aPNT.IdArchivo
          LEFT JOIN Archivo aCap ON s.IdCapturaEntrega = aCap.IdArchivo
          WHERE s.IdSolicitud = ?`,
-         [idSolicitud]
+        [idSolicitud]
       );
 
       const solFiles = archivosPrincipales[0];
@@ -995,7 +1004,7 @@ const generarPaqueteZip = async (req, res, next) => {
          FROM TurnadoSolicitud ts
          INNER JOIN Archivo a ON ts.IdArchivoOficio = a.IdArchivo
          WHERE ts.IdSolicitud = ?`,
-         [idSolicitud]
+        [idSolicitud]
       );
 
       if (oficios.length > 0) {
@@ -1013,7 +1022,7 @@ const generarPaqueteZip = async (req, res, next) => {
          INNER JOIN Archivo a ON er.IdArchivoRespuesta = a.IdArchivo
          INNER JOIN Usuario u ON er.IdUsuarioResponsable = u.IdUsuario
          WHERE r.IdSolicitud = ?`,
-         [idSolicitud]
+        [idSolicitud]
       );
 
       if (evidencias.length > 0) {

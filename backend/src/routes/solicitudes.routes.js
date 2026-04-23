@@ -26,6 +26,7 @@ const {
   obtenerOficioAsignado,
 } = require('../controllers/solicitudes.controller');
 const authMiddleware = require('../middlewares/authMiddleware');
+const requireRole = require('../middlewares/roleMiddleware');
 
 // Multer: almacenamiento en memoria (buffer directo a MySQL)
 const upload = multer({
@@ -66,35 +67,35 @@ const uploadPdf = multer({
   },
 });
 
-// GET  /api/solicitudes          → lista todas las solicitudes
-// POST /api/solicitudes          → crea nueva solicitud (requiere auth + archivo)
+// ─── Lectura: Cualquier usuario autenticado puede ver solicitudes ───
 router.get('/', authMiddleware, obtenerSolicitudes);
-router.post('/', authMiddleware, upload.single('archivo'), crearSolicitud);
-router.put('/:id/nombre', authMiddleware, actualizarNombreSolicitud);
-router.put('/:id/archivo', authMiddleware, upload.single('archivo'), actualizarArchivoSolicitud);
-router.post('/:id/captura-entrega', authMiddleware, uploadCaptura.single('captura'), subirCapturaEntrega);
-router.post('/:id/turnar', authMiddleware, turnarSolicitud);
-router.get('/:id/turnados', authMiddleware, obtenerTurnados);
 router.get('/:id/archivo-pnt', authMiddleware, obtenerArchivoPNT);
 router.get('/:id/captura-entrega', authMiddleware, obtenerCapturaEntrega);
-router.delete('/:id', authMiddleware, eliminarSolicitud);
-
-router.get('/:id/paquete', authMiddleware, generarPaqueteZip);
-router.put('/:id/resolver', authMiddleware, resolverSolicitud);
-
-// Rutas de evidencias de Responsables
-router.post('/:id/evidencia-responsable/upload', authMiddleware, uploadPdf.single('evidencia'), subirEvidenciaResponsable);
-router.get('/:id/evidencia-responsable/download', authMiddleware, obtenerEvidenciaResponsable);
-
-// Rutas de evidencias genéricas para TI/Contralora
+router.get('/:id/turnados', authMiddleware, obtenerTurnados);
 router.get('/:id/evidencias', authMiddleware, obtenerListaEvidencias);
 router.get('/evidencia/:idEvidencia/download', authMiddleware, descargarEvidenciaPorId);
-
-// Prórrogas
-router.post('/:id/prorroga', authMiddleware, solicitarProrroga);
 router.get('/:id/prorrogas', authMiddleware, obtenerPeticionesProrroga);
-router.put('/:id/prorroga', authMiddleware, asignarProrroga);
-router.put('/:id/cancelar', authMiddleware, cancelarSolicitud);
-router.get('/:id/oficio', authMiddleware, obtenerOficioAsignado);
+
+// ─── TI: Crear, editar, eliminar solicitudes ───
+router.post('/', authMiddleware, requireRole('TI'), upload.single('archivo'), crearSolicitud);
+router.put('/:id/nombre', authMiddleware, requireRole('TI'), actualizarNombreSolicitud);
+router.put('/:id/archivo', authMiddleware, requireRole('TI'), upload.single('archivo'), actualizarArchivoSolicitud);
+router.post('/:id/captura-entrega', authMiddleware, requireRole('TI'), uploadCaptura.single('captura'), subirCapturaEntrega);
+router.delete('/:id', authMiddleware, requireRole('TI'), eliminarSolicitud);
+
+// ─── Contralora: Turnar, cancelar, validar, asignar prórroga ───
+router.post('/:id/turnar', authMiddleware, requireRole('Contralora'), turnarSolicitud);
+router.put('/:id/cancelar', authMiddleware, requireRole('Contralora'), cancelarSolicitud);
+router.put('/:id/resolver', authMiddleware, requireRole('Contralora'), resolverSolicitud);
+router.put('/:id/prorroga', authMiddleware, requireRole('Contralora'), asignarProrroga);
+
+// ─── Responsable: Subir evidencia, solicitar prórroga, ver oficio ───
+router.post('/:id/evidencia-responsable/upload', authMiddleware, requireRole('Responsable'), uploadPdf.single('evidencia'), subirEvidenciaResponsable);
+router.get('/:id/evidencia-responsable/download', authMiddleware, requireRole('Responsable'), obtenerEvidenciaResponsable);
+router.post('/:id/prorroga', authMiddleware, requireRole('Responsable'), solicitarProrroga);
+router.get('/:id/oficio', authMiddleware, requireRole('Responsable'), obtenerOficioAsignado);
+
+// ─── TI y Secretaria: Generar paquete ZIP ───
+router.get('/:id/paquete', authMiddleware, requireRole('TI', 'Secretaria'), generarPaqueteZip);
 
 module.exports = router;

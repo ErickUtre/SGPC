@@ -400,7 +400,7 @@ const SolicitudesTransparenciaTI = () => {
                       <input
                         type="text"
                         value={nuevoNombre}
-                        maxLength={70}
+                        maxLength={100}
                         onChange={(e) => setNuevoNombre(e.target.value)}
                         className="w-full md:flex-1 border-b-2 border-blue-500 outline-none text-lg md:text-xl font-bold text-gray-800 bg-transparent focus:border-blue-700 transition-colors"
                         autoFocus
@@ -410,8 +410,8 @@ const SolicitudesTransparenciaTI = () => {
                         <button onClick={() => setEditandoId(null)} className="text-red-600 font-bold text-xs hover:text-red-800 transition-colors active:scale-95">Cancelar</button>
                       </div>
                     </div>
-                    <span className={`text-[9px] font-bold tracking-widest ${nuevoNombre.length >= 60 ? 'text-red-500' : 'text-gray-400'}`}>
-                      Caracteres: {nuevoNombre.length} / 70
+                    <span className={`text-[9px] font-bold tracking-widest ${nuevoNombre.length >= 90 ? 'text-red-500' : 'text-gray-400'}`}>
+                      Caracteres: {nuevoNombre.length} / 100
                     </span>
                   </div>
                 ) : null
@@ -574,6 +574,7 @@ const SolicitudesTransparenciaTI = () => {
                     value={nuevaSolicitudNombre}
                     onChange={(e) => setNuevaSolicitudNombre(e.target.value)}
                     placeholder="Ingrese el nombre"
+                    maxLength={100}
                     disabled={cargandoRegistro}
                     className="w-full border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#1e4b8f] transition-colors disabled:opacity-60"
                   />

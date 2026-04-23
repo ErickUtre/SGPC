@@ -7,11 +7,11 @@ const Usuarios = () => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
-  
+
   // Modals state
   const [modalEditar, setModalEditar] = useState(false);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
-  
+
   const [modalNuevo, setModalNuevo] = useState(false);
   const [usuarioNuevo, setUsuarioNuevo] = useState({
     nombre: '', apellidoPaterno: '', apellidoMaterno: '', abreviacionOcupacion: '',
@@ -34,7 +34,7 @@ const Usuarios = () => {
     setCargando(true);
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/usuarios`, {
+      const res = await fetch(`${API_BASE}/usuarios`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -56,13 +56,19 @@ const Usuarios = () => {
   const handleGuardarEdicion = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/usuarios/${usuarioEditando.IdUsuario}`, {
+      const res = await fetch(`${API_BASE}/usuarios/${usuarioEditando.IdUsuario}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(usuarioEditando)
+        body: JSON.stringify({
+          ...usuarioEditando,
+          nombre: usuarioEditando.nombre.trim(),
+          apellidoPaterno: (usuarioEditando.apellidoPaterno || '').trim(),
+          apellidoMaterno: (usuarioEditando.apellidoMaterno || '').trim(),
+          correo: (usuarioEditando.correo || '').trim(),
+        })
       });
       const data = await res.json();
       if (data.ok) {
@@ -87,13 +93,30 @@ const Usuarios = () => {
   const handleCrearUsuario = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/usuarios`, {
+      const datos = {
+        ...usuarioNuevo,
+        nombre: usuarioNuevo.nombre.trim(),
+        apellidoPaterno: (usuarioNuevo.apellidoPaterno || '').trim(),
+        apellidoMaterno: (usuarioNuevo.apellidoMaterno || '').trim(),
+        correo: (usuarioNuevo.correo || '').trim(),
+      };
+
+      if (!datos.nombre || !datos.correo || !datos.contrasena) {
+        window.alert('Nombre, correo y contraseña son obligatorios.');
+        return;
+      }
+      if (datos.contrasena.length < 8) {
+        window.alert('La contraseña debe tener al menos 8 caracteres.');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/usuarios`, {
         method: 'POST',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(usuarioNuevo)
+        body: JSON.stringify(datos)
       });
       const data = await res.json();
       if (data.ok) {
@@ -115,7 +138,7 @@ const Usuarios = () => {
   const handleEliminar = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/usuarios/${usuarioEliminar.IdUsuario}`, {
+      const res = await fetch(`${API_BASE}/usuarios/${usuarioEliminar.IdUsuario}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -136,7 +159,7 @@ const Usuarios = () => {
       <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-[#1e4b8f] tracking-tight">Gestión de Usuarios</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight font-sans">Gestión de Usuarios</h1>
             <p className="text-sm font-semibold text-gray-500 mt-1">Directorio de todo el personal registrado en el sistema.</p>
           </div>
           <button onClick={abrirNuevo} className="bg-[#1e4b8f] text-white px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-[#153566] transition-colors shadow-md flex items-center gap-2 active:scale-95">
@@ -212,39 +235,39 @@ const Usuarios = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Nombre</label>
-                  <input type="text" value={usuarioEditando.nombre} onChange={e => setUsuarioEditando({...usuarioEditando, nombre: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioEditando.nombre} onChange={e => setUsuarioEditando({ ...usuarioEditando, nombre: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Paterno</label>
-                  <input type="text" value={usuarioEditando.apellidoPaterno} onChange={e => setUsuarioEditando({...usuarioEditando, apellidoPaterno: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioEditando.apellidoPaterno} onChange={e => setUsuarioEditando({ ...usuarioEditando, apellidoPaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Materno</label>
-                  <input type="text" value={usuarioEditando.apellidoMaterno} onChange={e => setUsuarioEditando({...usuarioEditando, apellidoMaterno: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioEditando.apellidoMaterno} onChange={e => setUsuarioEditando({ ...usuarioEditando, apellidoMaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Abrev. Ocupación</label>
-                  <input type="text" value={usuarioEditando.abreviacionOcupacion} onChange={e => setUsuarioEditando({...usuarioEditando, abreviacionOcupacion: e.target.value})} placeholder="Ej: M.A.P." className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioEditando.abreviacionOcupacion} onChange={e => setUsuarioEditando({ ...usuarioEditando, abreviacionOcupacion: e.target.value })} maxLength={10} placeholder="Ej: M.A.P." className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ocupación</label>
-                  <input type="text" value={usuarioEditando.ocupacion} onChange={e => setUsuarioEditando({...usuarioEditando, ocupacion: e.target.value})} placeholder="Ej: Contralora" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioEditando.ocupacion} onChange={e => setUsuarioEditando({ ...usuarioEditando, ocupacion: e.target.value })} maxLength={30} placeholder="Ej: Contralora" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Puesto</label>
-                <input type="text" value={usuarioEditando.puesto} onChange={e => setUsuarioEditando({...usuarioEditando, puesto: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                <input type="text" value={usuarioEditando.puesto} onChange={e => setUsuarioEditando({ ...usuarioEditando, puesto: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
-                  <input type="email" value={usuarioEditando.correo} onChange={e => setUsuarioEditando({...usuarioEditando, correo: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="email" value={usuarioEditando.correo} onChange={e => setUsuarioEditando({ ...usuarioEditando, correo: e.target.value })} maxLength={100} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Rol en Sistema</label>
-                  <select value={usuarioEditando.rol} onChange={e => setUsuarioEditando({...usuarioEditando, rol: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none bg-white">
+                  <select value={usuarioEditando.rol} onChange={e => setUsuarioEditando({ ...usuarioEditando, rol: e.target.value })} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none bg-white">
                     <option value="Contralora">Contralora</option>
                     <option value="TI">TI</option>
                     <option value="Secretaria">Secretaria</option>
@@ -254,8 +277,8 @@ const Usuarios = () => {
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
-                 <button onClick={() => setModalEditar(false)} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
-                 <button onClick={handleGuardarEdicion} className="px-6 py-2.5 bg-[#009642] text-white rounded-xl font-bold text-xs hover:bg-green-700 transition-colors shadow-md active:scale-95">Guardar Cambios</button>
+                <button onClick={() => setModalEditar(false)} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
+                <button onClick={handleGuardarEdicion} className="px-6 py-2.5 bg-[#009642] text-white rounded-xl font-bold text-xs hover:bg-green-700 transition-colors shadow-md active:scale-95">Guardar Cambios</button>
               </div>
             </div>
           </div>
@@ -274,43 +297,43 @@ const Usuarios = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Nombre</label>
-                  <input type="text" value={usuarioNuevo.nombre} onChange={e => setUsuarioNuevo({...usuarioNuevo, nombre: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioNuevo.nombre} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, nombre: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Paterno</label>
-                  <input type="text" value={usuarioNuevo.apellidoPaterno} onChange={e => setUsuarioNuevo({...usuarioNuevo, apellidoPaterno: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioNuevo.apellidoPaterno} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, apellidoPaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Materno</label>
-                  <input type="text" value={usuarioNuevo.apellidoMaterno} onChange={e => setUsuarioNuevo({...usuarioNuevo, apellidoMaterno: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioNuevo.apellidoMaterno} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, apellidoMaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Abrev. Ocupación</label>
-                  <input type="text" value={usuarioNuevo.abreviacionOcupacion} onChange={e => setUsuarioNuevo({...usuarioNuevo, abreviacionOcupacion: e.target.value})} placeholder="Ej: M.A.P." className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioNuevo.abreviacionOcupacion} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, abreviacionOcupacion: e.target.value })} maxLength={10} placeholder="Ej: M.A.P." className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ocupación</label>
-                  <input type="text" value={usuarioNuevo.ocupacion} onChange={e => setUsuarioNuevo({...usuarioNuevo, ocupacion: e.target.value})} placeholder="Ej: Contralora" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="text" value={usuarioNuevo.ocupacion} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, ocupacion: e.target.value })} maxLength={30} placeholder="Ej: Contralora" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Puesto</label>
-                <input type="text" value={usuarioNuevo.puesto} onChange={e => setUsuarioNuevo({...usuarioNuevo, puesto: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                <input type="text" value={usuarioNuevo.puesto} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, puesto: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
-                  <input type="email" value={usuarioNuevo.correo} onChange={e => setUsuarioNuevo({...usuarioNuevo, correo: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="email" value={usuarioNuevo.correo} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, correo: e.target.value })} maxLength={100} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div className="col-span-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Contraseña Incial</label>
-                  <input type="password" value={usuarioNuevo.contrasena} onChange={e => setUsuarioNuevo({...usuarioNuevo, contrasena: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+                  <input type="password" value={usuarioNuevo.contrasena} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, contrasena: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
                 </div>
                 <div className="col-span-1">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Rol en Sistema</label>
-                  <select value={usuarioNuevo.rol} onChange={e => setUsuarioNuevo({...usuarioNuevo, rol: e.target.value})} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none bg-white">
+                  <select value={usuarioNuevo.rol} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, rol: e.target.value })} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none bg-white">
                     <option value="Contralora">Contralora</option>
                     <option value="TI">TI</option>
                     <option value="Secretaria">Secretaria</option>
@@ -320,8 +343,8 @@ const Usuarios = () => {
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
-                 <button onClick={() => setModalNuevo(false)} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
-                 <button onClick={handleCrearUsuario} className="px-6 py-2.5 bg-[#1e4b8f] text-white rounded-xl font-bold text-xs hover:bg-[#153566] transition-colors shadow-md active:scale-95">Registrar</button>
+                <button onClick={() => setModalNuevo(false)} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
+                <button onClick={handleCrearUsuario} className="px-6 py-2.5 bg-[#1e4b8f] text-white rounded-xl font-bold text-xs hover:bg-[#153566] transition-colors shadow-md active:scale-95">Registrar</button>
               </div>
             </div>
           </div>
@@ -342,7 +365,7 @@ const Usuarios = () => {
               <p className="text-gray-800 font-bold mb-1">¿Estás seguro que deseas eliminar a este usuario?</p>
               <p className="text-[#1e4b8f] font-black text-lg mb-4">{usuarioEliminar.nombre} {usuarioEliminar.apellidoPaterno}</p>
               <p className="text-[10px] text-gray-500 bg-red-50 p-2 rounded border border-red-100 uppercase tracking-widest font-bold">Esta acción no se puede deshacer y fallará si el usuario tiene procesos activos.</p>
-              
+
               <div className="flex gap-3 mt-6">
                 <button onClick={() => setModalEliminar(false)} className="flex-1 py-3 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
                 <button onClick={handleEliminar} className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-red-700 transition-colors shadow-md active:scale-95">Eliminar Definitivamente</button>

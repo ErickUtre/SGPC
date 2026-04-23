@@ -177,8 +177,16 @@ const SolicitudesTransparenciaContralora = () => {
     }
   };
 
+  const [foliosPorResponsable, setFoliosPorResponsable] = useState({});
+
   const confirmarAsignacion = async () => {
     if (seleccionados.length === 0) return;
+
+    const foliosCompletos = seleccionados.every(id => (foliosPorResponsable[id] || '').length === 9);
+    if (!foliosCompletos) {
+      setErrorAsignar('Todos los responsables seleccionados deben tener un folio de 9 caracteres.');
+      return;
+    }
 
     if (solicitudSeleccionada.asignada) {
       const confirmar = window.confirm(
@@ -190,18 +198,28 @@ const SolicitudesTransparenciaContralora = () => {
     setErrorAsignar('');
     setAsignando(true);
 
-    const token = sessionStorage.getItem('token');
     try {
+      const token = sessionStorage.getItem('token');
+      const asignaciones = seleccionados.map(id => ({
+        idResponsable: id,
+        folioOficio: foliosPorResponsable[id]
+      }));
+
       const response = await fetch(`${API_BASE}/solicitudes/${solicitudSeleccionada.idOriginal}/turnar`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify({ idsResponsables: seleccionados }),
+        body: JSON.stringify({ asignaciones }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        throw new Error('El servidor no devolvió una respuesta válida.');
+      }
 
       if (response.ok && data.ok) {
         state.setSolicitudes(state.solicitudes.map(s => 
@@ -209,24 +227,31 @@ const SolicitudesTransparenciaContralora = () => {
             ? { ...s, asignada: true, evidenciaSubida: false, validada: false } 
             : s
         ));
-        setModalAsignar(false);
+        
         setSeleccionados([]);
+        setFoliosPorResponsable({});
+        setErrorAsignar('');
+        setAsignando(false);
+        setModalAsignar(false);
       } else {
         setErrorAsignar(data.mensaje || 'Error al asignar responsables y generar oficios.');
+        setAsignando(false);
       }
     } catch (error) {
-      console.error("Error al asignar responsables", error);
-      setErrorAsignar('No se pudo conectar con el servidor. Verifica tu conexión.');
-    } finally {
+      console.error("Error crítico al asignar responsables:", error);
+      setErrorAsignar(error.message || 'No se pudo conectar con el servidor.');
       setAsignando(false);
+    } finally {
+      setTimeout(() => setAsignando(false), 100);
     }
   };
 
   const abrirModalReasignar = async (sol) => {
     setSolicitudSeleccionada(sol);
-    setSeleccionados([]); // Limpiar selección previa mientras carga
+    setSeleccionados([]);
+    setFoliosPorResponsable({});
     setModalAsignar(true);
-    setErrorAsignar(''); // Limpiar errores previos
+    setErrorAsignar('');
     setAsignando(false);
     
     try {
@@ -236,7 +261,13 @@ const SolicitudesTransparenciaContralora = () => {
       });
       const data = await response.json();
       if (data.ok) {
-        setSeleccionados(data.turnados);
+        const ids = data.turnados.map(t => t.IdUsuarioResponsable);
+        const mapFolios = {};
+        data.turnados.forEach(t => {
+          mapFolios[t.IdUsuarioResponsable] = t.folioOficio || '';
+        });
+        setSeleccionados(ids);
+        setFoliosPorResponsable(mapFolios);
       }
     } catch (error) {
       console.error("Error al cargar turnados actuales", error);
@@ -244,7 +275,20 @@ const SolicitudesTransparenciaContralora = () => {
   };
 
   const toggleSeleccion = (id) => {
-    setSeleccionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    setSeleccionados(prev => {
+      if (prev.includes(id)) {
+        const newFolios = { ...foliosPorResponsable };
+        delete newFolios[id];
+        setFoliosPorResponsable(newFolios);
+        return prev.filter(i => i !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handleFolioChange = (id, val) => {
+    setFoliosPorResponsable(prev => ({ ...prev, [id]: val.toUpperCase() }));
   };
 
   const abrirModalCancelar = (sol) => {
@@ -443,20 +487,43 @@ const SolicitudesTransparenciaContralora = () => {
             </div>
             <div className="p-8">
               <div className="space-y-3 mb-8">
-                {responsables.map(resp => (
-                  <label key={resp.IdUsuario} className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors group">
-                    <input 
-                      type="checkbox" 
-                      className="w-5 h-5 rounded accent-[#1e4b8f] cursor-pointer" 
-                      checked={seleccionados.includes(resp.IdUsuario)}
-                      onChange={() => toggleSeleccion(resp.IdUsuario)}
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-700 group-hover:text-[#1e4b8f]">{resp.nombre}</span>
-                      <span className="text-[10px] text-gray-400">{resp.correo}</span>
+                {responsables.map(resp => {
+                  const isSelected = seleccionados.includes(resp.IdUsuario);
+                  return (
+                    <div key={resp.IdUsuario} className="flex flex-col gap-2">
+                      <label className={`flex items-center gap-3 p-4 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors group ${isSelected ? 'bg-blue-50/30' : ''}`}>
+                        <input 
+                          type="checkbox" 
+                          className="w-5 h-5 rounded accent-[#1e4b8f] cursor-pointer" 
+                          checked={isSelected}
+                          onChange={() => toggleSeleccion(resp.IdUsuario)}
+                        />
+                        <div className="flex flex-col flex-1">
+                          <span className="text-sm font-semibold text-gray-700 group-hover:text-[#1e4b8f]">{resp.nombre}</span>
+                          <span className="text-[10px] text-gray-400">{resp.correo}</span>
+                        </div>
+                      </label>
+                      {isSelected && (
+                        <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200">
+                          <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Folio Oficio:</label>
+                            <input
+                              type="text"
+                              maxLength={9}
+                              value={foliosPorResponsable[resp.IdUsuario] || ''}
+                              onChange={(e) => handleFolioChange(resp.IdUsuario, e.target.value)}
+                              placeholder="0000/2026"
+                              className="bg-white border-2 border-gray-100 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-700 outline-none focus:border-[#1e4b8f] w-32"
+                            />
+                            <span className="text-[10px] font-bold text-gray-400">
+                              {(foliosPorResponsable[resp.IdUsuario] || '').length}/9
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </label>
-                ))}
+                  );
+                })}
                 
                 {cargandoResponsables && (
                   <div className="flex flex-col items-center py-4 gap-2 text-gray-400">
