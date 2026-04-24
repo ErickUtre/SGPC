@@ -1,14 +1,75 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
     container_name: sgpc_mysql_db
     restart: always
     environment:
-      MYSQL_DATABASE: sgpc_db
-      MYSQL_ROOT_PASSWORD: password123
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "3306:3306"
+      - "${DB_PORT}:3306"
     volumes:
       - ./database:/docker-entrypoint-initdb.d
+      - sgpc_db_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+    networks:
+      - sgpc_network
+
+  api:
+    build: ./backend
+    container_name: sgpc_api
+    restart: always
+    ports:
+      - "${API_PORT}:3001"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sgpc_network
+
+  frontend:
+    build: ./frontend
+    container_name: sgpc_frontend
+    restart: always
+    ports:
+      - "${VITE_PORT}:5173"
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - sgpc_network
+
+volumes:
+  sgpc_db_data:
+
+networks:
+  sgpc_network:
+    driver: bridge

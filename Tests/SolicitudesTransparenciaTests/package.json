@@ -1,0 +1,16 @@
+{
+  "name": "sgpc-api-tests",
+  "version": "1.0.0",
+  "description": "Pruebas automatizadas para la API de SGPC",
+  "main": "api.test.js",
+  "scripts": {
+    "test": "jest --detectOpenHandles"
+  },
+  "dependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "mysql2": "^3.9.7",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5"
+  }
+}

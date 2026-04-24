@@ -4,26 +4,23 @@ import bannerImg from '../assets/banner-uv.png';
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const userRole = sessionStorage.getItem("userRole");
+    const userName = sessionStorage.getItem("userName");
+    const userLN = sessionStorage.getItem("userLN");
+    const userMLN = sessionStorage.getItem("userMLN");
+    const userPuesto = sessionStorage.getItem("userPuesto");
+
+    const handleTransparenciaClick = () => {
+        if (userRole === "Contralora") navigate('/transparencia/contralora');
+        else if (userRole === "Responsable") navigate('/transparencia/responsable');
+        else if (userRole === "Secretaria") navigate('/transparencia/secretaria');
+        else navigate('/transparencia/ti');
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
-            {/* 1. Header Fijo */}
-            <header className="bg-[#1e4b8f] text-white p-4 shadow-md flex justify-between items-center px-8 z-50">
-                <div className="flex items-center gap-4">
-                    <div className="bg-white p-1 rounded">
-                        <span className="text-[#1e4b8f] font-bold text-xs">UV</span>
-                    </div>
-                    <h1 className="font-semibold text-sm">Contraloría General</h1>
-                </div>
-                <button
-                    onClick={() => navigate('/')}
-                    className="flex items-center gap-2 hover:text-red-300 transition-colors text-sm italic"
-                >
-                    Cerrar sesión ⎗
-                </button>
-            </header>
 
-            {/* 2. Banner de Bienvenida */}
+
             <section
                 className="relative w-full py-24 px-8 text-center bg-gray-900 bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: `url(${bannerImg})` }}
@@ -31,12 +28,13 @@ const Dashboard = () => {
                 <div className="absolute inset-0 bg-black/60 z-10"></div>
                 <div className="relative z-20 text-white">
                     <h2 className="text-4xl font-light">Bienvenid@</h2>
-                    <p className="text-3xl font-bold mt-2">Norma Hilda Jiménez Martínez</p>
+                    <p className="text-3xl font-bold mt-2">{userName} {userLN} {userMLN}</p>
+                    {userPuesto && <p className="text-xl font-medium mt-1 text-gray-300">{userPuesto}</p>}
                     <div className="w-20 h-1 bg-green-500 mx-auto mt-6 rounded-full"></div>
                 </div>
             </section>
 
-            {/* 3. Contenedor de Módulos */}
+
             <main className="flex-1 max-w-7xl mx-auto w-full p-8 py-12">
                 <div className="text-center mb-12">
                     <h3 className="text-2xl font-bold text-gray-800">Módulos del Sistema</h3>
@@ -46,18 +44,18 @@ const Dashboard = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                    {/* Tarjeta de Transparencia - REPARADA */}
+
                     <div
-                        onClick={() => navigate('/transparencia')}
+                        onClick={handleTransparenciaClick}
                         className="group relative h-72 rounded-3xl overflow-hidden shadow-lg cursor-pointer transform hover:-translate-y-2 transition-all duration-300"
                     >
-                        {/* Imagen de fondo confinada a la tarjeta */}
+
                         <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=600')] bg-cover bg-center group-hover:scale-110 transition-transform duration-500"></div>
 
-                        {/* Overlay de la tarjeta */}
+
                         <div className="absolute inset-0 z-10 bg-black/50 group-hover:bg-black/40 transition-colors"></div>
 
-                        {/* Contenido de la tarjeta */}
+
                         <div className="relative z-20 h-full p-8 flex flex-col justify-end text-white">
                             <span className="absolute top-6 right-6 bg-white/20 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/30">
                                 1
@@ -71,7 +69,7 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Espacios para futuros módulos */}
+
                     <div className="h-72 border-2 border-dashed border-gray-200 rounded-3xl flex items-center justify-center text-gray-400 italic">
                         Próximamente: Gestión de Auditorías
                     </div>

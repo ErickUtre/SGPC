@@ -1,0 +1,23 @@
+# Environment Variables
+.env
+*.env
+
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Docker
+.dockerignore
+
+# IDEs
+.vscode/
+.idea/
+
+# OS Files
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+frontend/dist/
+backend/dist/
