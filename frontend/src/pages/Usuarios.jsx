@@ -3,6 +3,79 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { API_BASE } from '../utils/solicitudesTransparencia';
 
+const UsuarioFormModal = ({ title, usuario, setUsuario, onClose, onSave, isEdit }) => {
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200">
+        <div className="bg-[#1e4b8f] p-5 text-white flex items-center justify-between">
+          <h3 className="font-bold text-sm tracking-widest uppercase">{title}</h3>
+          <button onClick={onClose} className="text-white/70 hover:text-white">✕</button>
+        </div>
+        <div className="p-6 md:p-8 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Nombre</label>
+              <input type="text" value={usuario.nombre} onChange={e => setUsuario({ ...usuario, nombre: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Paterno</label>
+              <input type="text" value={usuario.apellidoPaterno} onChange={e => setUsuario({ ...usuario, apellidoPaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Materno</label>
+              <input type="text" value={usuario.apellidoMaterno} onChange={e => setUsuario({ ...usuario, apellidoMaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="col-span-1">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Abrev. Ocupación</label>
+              <input type="text" value={usuario.abreviacionOcupacion} onChange={e => setUsuario({ ...usuario, abreviacionOcupacion: e.target.value })} maxLength={10} placeholder="Ej: M.A.P." className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ocupación</label>
+              <input type="text" value={usuario.ocupacion} onChange={e => setUsuario({ ...usuario, ocupacion: e.target.value })} maxLength={30} placeholder="Ej: Contralora" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Puesto</label>
+            <input type="text" value={usuario.puesto} onChange={e => setUsuario({ ...usuario, puesto: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+          </div>
+          <div className={`grid grid-cols-1 ${!isEdit ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+            <div className={!isEdit ? 'col-span-1' : ''}>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
+              <input type="email" value={usuario.correo} onChange={e => setUsuario({ ...usuario, correo: e.target.value })} maxLength={100} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+            </div>
+            
+            {!isEdit && (
+              <div className="col-span-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Contraseña Inicial</label>
+                <input type="password" value={usuario.contrasena} onChange={e => setUsuario({ ...usuario, contrasena: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
+              </div>
+            )}
+
+            <div className={!isEdit ? 'col-span-1' : ''}>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Rol en Sistema</label>
+              <select value={usuario.rol} onChange={e => setUsuario({ ...usuario, rol: e.target.value })} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none bg-white">
+                <option value="Contralora">Contralora</option>
+                <option value="TI">TI</option>
+                <option value="Secretaria">Secretaria</option>
+                <option value="Responsable">Responsable</option>
+                <option value="Supervisor">Supervisor</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+            <button onClick={onClose} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
+            <button onClick={onSave} className={`px-6 py-2.5 text-white rounded-xl font-bold text-xs transition-colors shadow-md active:scale-95 ${isEdit ? 'bg-[#009642] hover:bg-green-700' : 'bg-[#1e4b8f] hover:bg-[#153566]'}`}>
+              {isEdit ? 'Guardar Cambios' : 'Registrar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Usuarios = () => {
   const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
@@ -223,132 +296,28 @@ const Usuarios = () => {
         </div>
       </main>
 
-      {/* MODAL EDITAR */}
+      {/* MODAL EDITAR - Using shared component */}
       {modalEditar && usuarioEditando && (
-        <div className="fixed inset-0 bg-black/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-[#1e4b8f] p-5 text-white flex items-center justify-between">
-              <h3 className="font-bold text-sm tracking-widest uppercase">Editar Usuario</h3>
-              <button onClick={() => setModalEditar(false)} className="text-white/70 hover:text-white">✕</button>
-            </div>
-            <div className="p-6 md:p-8 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Nombre</label>
-                  <input type="text" value={usuarioEditando.nombre} onChange={e => setUsuarioEditando({ ...usuarioEditando, nombre: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Paterno</label>
-                  <input type="text" value={usuarioEditando.apellidoPaterno} onChange={e => setUsuarioEditando({ ...usuarioEditando, apellidoPaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Materno</label>
-                  <input type="text" value={usuarioEditando.apellidoMaterno} onChange={e => setUsuarioEditando({ ...usuarioEditando, apellidoMaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="col-span-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Abrev. Ocupación</label>
-                  <input type="text" value={usuarioEditando.abreviacionOcupacion} onChange={e => setUsuarioEditando({ ...usuarioEditando, abreviacionOcupacion: e.target.value })} maxLength={10} placeholder="Ej: M.A.P." className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ocupación</label>
-                  <input type="text" value={usuarioEditando.ocupacion} onChange={e => setUsuarioEditando({ ...usuarioEditando, ocupacion: e.target.value })} maxLength={30} placeholder="Ej: Contralora" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Puesto</label>
-                <input type="text" value={usuarioEditando.puesto} onChange={e => setUsuarioEditando({ ...usuarioEditando, puesto: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
-                  <input type="email" value={usuarioEditando.correo} onChange={e => setUsuarioEditando({ ...usuarioEditando, correo: e.target.value })} maxLength={100} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Rol en Sistema</label>
-                  <select value={usuarioEditando.rol} onChange={e => setUsuarioEditando({ ...usuarioEditando, rol: e.target.value })} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none bg-white">
-                    <option value="Contralora">Contralora</option>
-                    <option value="TI">TI</option>
-                    <option value="Secretaria">Secretaria</option>
-                    <option value="Responsable">Responsable</option>
-                    <option value="Supervisor">Supervisor</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
-                <button onClick={() => setModalEditar(false)} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
-                <button onClick={handleGuardarEdicion} className="px-6 py-2.5 bg-[#009642] text-white rounded-xl font-bold text-xs hover:bg-green-700 transition-colors shadow-md active:scale-95">Guardar Cambios</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UsuarioFormModal 
+          title="Editar Usuario"
+          usuario={usuarioEditando}
+          setUsuario={setUsuarioEditando}
+          onClose={() => setModalEditar(false)}
+          onSave={handleGuardarEdicion}
+          isEdit={true}
+        />
       )}
 
-      {/* MODAL NUEVO */}
+      {/* MODAL NUEVO - Using shared component */}
       {modalNuevo && (
-        <div className="fixed inset-0 bg-black/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-[#1e4b8f] p-5 text-white flex items-center justify-between">
-              <h3 className="font-bold text-sm tracking-widest uppercase">Registrar Nuevo Usuario</h3>
-              <button onClick={() => setModalNuevo(false)} className="text-white/70 hover:text-white">✕</button>
-            </div>
-            <div className="p-6 md:p-8 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Nombre</label>
-                  <input type="text" value={usuarioNuevo.nombre} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, nombre: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Paterno</label>
-                  <input type="text" value={usuarioNuevo.apellidoPaterno} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, apellidoPaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ap. Materno</label>
-                  <input type="text" value={usuarioNuevo.apellidoMaterno} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, apellidoMaterno: e.target.value })} maxLength={30} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="col-span-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Abrev. Ocupación</label>
-                  <input type="text" value={usuarioNuevo.abreviacionOcupacion} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, abreviacionOcupacion: e.target.value })} maxLength={10} placeholder="Ej: M.A.P." className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Ocupación</label>
-                  <input type="text" value={usuarioNuevo.ocupacion} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, ocupacion: e.target.value })} maxLength={30} placeholder="Ej: Contralora" className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Puesto</label>
-                <input type="text" value={usuarioNuevo.puesto} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, puesto: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="col-span-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
-                  <input type="email" value={usuarioNuevo.correo} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, correo: e.target.value })} maxLength={100} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div className="col-span-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Contraseña Incial</label>
-                  <input type="password" value={usuarioNuevo.contrasena} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, contrasena: e.target.value })} maxLength={50} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none" />
-                </div>
-                <div className="col-span-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Rol en Sistema</label>
-                  <select value={usuarioNuevo.rol} onChange={e => setUsuarioNuevo({ ...usuarioNuevo, rol: e.target.value })} className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:border-[#1e4b8f] outline-none bg-white">
-                    <option value="Contralora">Contralora</option>
-                    <option value="TI">TI</option>
-                    <option value="Secretaria">Secretaria</option>
-                    <option value="Responsable">Responsable</option>
-                    <option value="Supervisor">Supervisor</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
-                <button onClick={() => setModalNuevo(false)} className="px-6 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">Cancelar</button>
-                <button onClick={handleCrearUsuario} className="px-6 py-2.5 bg-[#1e4b8f] text-white rounded-xl font-bold text-xs hover:bg-[#153566] transition-colors shadow-md active:scale-95">Registrar</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UsuarioFormModal 
+          title="Registrar Nuevo Usuario"
+          usuario={usuarioNuevo}
+          setUsuario={setUsuarioNuevo}
+          onClose={() => setModalNuevo(false)}
+          onSave={handleCrearUsuario}
+          isEdit={false}
+        />
       )}
 
       {/* MODAL ELIMINAR */}
