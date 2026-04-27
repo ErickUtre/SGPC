@@ -25,8 +25,9 @@ services:
     build: ./backend
     container_name: sgpc_api
     restart: always
-    ports:
-      - "${API_PORT}:3001"
+    # Puertos comentados para mayor seguridad; Nginx maneja el proxy interno
+    # ports:
+    #   - "${API_PORT}:3001"
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -41,10 +42,7 @@ services:
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: npm run dev
+    command: node server.js
     depends_on:
       db:
         condition: service_healthy
@@ -56,12 +54,7 @@ services:
     container_name: sgpc_frontend
     restart: always
     ports:
-      - "${VITE_PORT}:5173"
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "80:80"
     depends_on:
       - api
     networks:
